@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
@@ -36,37 +37,127 @@ const MBTI_LUCKY_PHRASES = {
   ISTP: '银弦孤鸣', ISFP: '兰紫自由', ESTP: '电光闪耀', ESFP: '霓虹盛放',
 };
 
-// ── State ─────────────────────────────────────────────────────────────────────
-const mbtiCounts = {};
-let totalJoined = 0;
+// ── Sessions (活动场次) ──────────────────────────────────────────────────────
+const SESSIONS_FILE = path.join(__dirname, 'sessions.json');
+
+function loadSessions() {
+  try {
+    if (fs.existsSync(SESSIONS_FILE)) {
+      return JSON.parse(fs.readFileSync(SESSIONS_FILE, 'utf8'));
+    }
+  } catch (e) { console.warn('Failed to load sessions:', e.message); }
+  return { active: null, history: [] };
+}
+
+function saveSessions(data) {
+  fs.writeFileSync(SESSIONS_FILE, JSON.stringify(data, null, 2), 'utf8');
+}
+
+let sessionsData = loadSessions();
+
+// Ensure there's an active session on startup
+if (!sessionsData.active) {
+  sessionsData.active = {
+    id: Date.now().toString(36),
+    name: '默认活动',
+    createdAt: new Date().toISOString(),
+    counts: {},
+    total: 0,
+  };
+  saveSessions(sessionsData);
+}
+
+// Shortcuts for current session
+function currentCounts() { return sessionsData.active.counts; }
+function currentTotal() { return sessionsData.active.total; }
+
+// ── REST API for session management ──────────────────────────────────────────
+
+// Get current session + history list
+app.get('/api/sessions', (req, res) => {
+  res.json({
+    active: sessionsData.active,
+    history: sessionsData.history.map(s => ({
+      id: s.id, name: s.name, createdAt: s.createdAt, total: s.total,
+    })),
+  });
+});
+
+// Create a new session (archives current to history)
+app.post('/api/sessions/new', (req, res) => {
+  const name = (req.body.name || '').trim() || `活动 ${sessionsData.history.length + 2}`;
+
+  // Archive current session
+  sessionsData.history.unshift({ ...sessionsData.active, archivedAt: new Date().toISOString() });
+
+  // Create fresh session
+  sessionsData.active = {
+    id: Date.now().toString(36),
+    name,
+    createdAt: new Date().toISOString(),
+    counts: {},
+    total: 0,
+  };
+  saveSessions(sessionsData);
+
+  // Notify all clients to reset canvas
+  io.emit('session_reset', { session: sessionsData.active });
+
+  console.log(`[Session] New: "${name}"`);
+  res.json({ ok: true, active: sessionsData.active });
+});
+
+// Get a specific history session
+app.get('/api/sessions/:id', (req, res) => {
+  const s = sessionsData.history.find(h => h.id === req.params.id);
+  if (!s) return res.status(404).json({ error: 'Session not found' });
+  res.json(s);
+});
+
+// Delete a history session
+app.delete('/api/sessions/:id', (req, res) => {
+  const idx = sessionsData.history.findIndex(h => h.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Session not found' });
+  sessionsData.history.splice(idx, 1);
+  saveSessions(sessionsData);
+  console.log(`[Session] Deleted: ${req.params.id}`);
+  res.json({ ok: true });
+});
 
 // ── Socket.IO ─────────────────────────────────────────────────────────────────
 io.on('connection', (socket) => {
-  // Sync new client
-  socket.emit('state', { counts: mbtiCounts, colors: MBTI_COLORS, total: totalJoined });
+  // Sync new client with active session
+  socket.emit('state', {
+    counts: currentCounts(),
+    colors: MBTI_COLORS,
+    total: currentTotal(),
+    session: sessionsData.active,
+  });
 
   socket.on('submit_mbti', (data) => {
     const mbti = (data.mbti || '').toUpperCase().trim();
     if (!MBTI_COLORS[mbti]) return;
 
-    mbtiCounts[mbti] = (mbtiCounts[mbti] || 0) + 1;
-    totalJoined++;
+    const counts = currentCounts();
+    counts[mbti] = (counts[mbti] || 0) + 1;
+    sessionsData.active.total++;
+    saveSessions(sessionsData);
 
     const payload = {
       mbti,
       color: MBTI_COLORS[mbti],
       nickname: MBTI_NAMES[mbti],
       luckyPhrase: MBTI_LUCKY_PHRASES[mbti],
-      count: mbtiCounts[mbti],
+      count: counts[mbti],
     };
 
     // Reply to submitter
     socket.emit('lucky_color', payload);
 
     // Broadcast to all screens
-    io.emit('spawn_particles', { ...payload, counts: mbtiCounts, total: totalJoined });
+    io.emit('spawn_particles', { ...payload, counts, total: currentTotal() });
 
-    console.log(`[+] ${mbti} (${MBTI_NAMES[mbti]}) joined — total: ${totalJoined}`);
+    console.log(`[+] ${mbti} (${MBTI_NAMES[mbti]}) joined — total: ${currentTotal()}`);
   });
 });
 
