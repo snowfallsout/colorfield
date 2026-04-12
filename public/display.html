@@ -677,37 +677,19 @@ class Particle {
     }
 
     // ══════════════════════════════════════════════════════════
-    // 手势捏合：最高优先级 — 跳过状态机
-    // 根据当前绘图阶段选择不同的运动模式
+    // 双手捏合：最高优先级 — 粒子被最近的手吸引（撕拉效果）
     // ══════════════════════════════════════════════════════════
-    const dm = DRAW_MODE;
-
-    // 【绘图模式】粒子沿笔触路径排列，形成"活体笔刷"
-    if (dm.phase === 'drawing' && this._drawTarget && this.sizeClass !== 'field') {
-      const tdx = this._drawTarget.x - this.x;
-      const tdy = this._drawTarget.y - this.y;
-      const td  = Math.sqrt(tdx*tdx + tdy*tdy) || 1;
-      // 强力吸向目标点，越近越慢（避免抖动）
-      const str = Math.min(5.0, td * 0.18);
-      this.vx += (tdx / td) * str;
-      this.vy += (tdy / td) * str;
-      this.vx *= 0.72;
-      this.vy *= 0.72;
-      this.x += this.vx;
-      this.y += this.vy;
-      if (this.x < -20) this.x = W + 10;
-      if (this.x > W + 20) this.x = -10;
-      if (this.y < -20) this.y = H + 10;
-      if (this.y > H + 20) this.y = -10;
-      return;
-    }
-
-    // 【聚合模式】捏合但还未进入绘图，粒子向手部汇聚
-    if (activePinchPoint && this.sizeClass !== 'field' &&
-        (dm.phase === 'gathering' || dm.phase === 'idle')) {
-      const pdx = activePinchPoint.x - this.x;
-      const pdy = activePinchPoint.y - this.y;
-      const pd  = Math.sqrt(pdx * pdx + pdy * pdy) || 1;
+    if (activePinchPoints.length > 0 && this.sizeClass !== 'field') {
+      // 找到距离本粒子最近的捏合点
+      let nearest = activePinchPoints[0];
+      if (activePinchPoints.length > 1) {
+        const d0 = (activePinchPoints[0].x-this.x)**2 + (activePinchPoints[0].y-this.y)**2;
+        const d1 = (activePinchPoints[1].x-this.x)**2 + (activePinchPoints[1].y-this.y)**2;
+        nearest = d0 < d1 ? activePinchPoints[0] : activePinchPoints[1];
+      }
+      const pdx = nearest.x - this.x;
+      const pdy = nearest.y - this.y;
+      const pd  = Math.sqrt(pdx*pdx + pdy*pdy) || 1;
       const str = Math.min(6.0, 500 / pd) * 0.22;
       this.vx += (pdx / pd) * str + (Math.random() - .5) * 0.4;
       this.vy += (pdy / pd) * str + (Math.random() - .5) * 0.4;
@@ -957,8 +939,8 @@ let _faceMesh = null;
 let _hands    = null;
 
 // Latest raw hand results for skeleton rendering
-let handsResults     = null;
-let activePinchPoint = null;
+let handsResults      = null;
+let activePinchPoints = [];   // 最多2个捏合点，每只手独立一个
 
 // ── Draw Mode State Machine ────────────────────────────────────────────────────
 // Phases: 'idle' → 'gathering' → 'drawing' → 'dissolving' → 'idle'
@@ -1085,31 +1067,30 @@ function _initHands() {
     modelComplexity: 0,   // 0=lite速度快, 1=full更准
   });
   _hands.onResults(res => {
-    handsResults     = res;
-    activePinchPoint = null;
+    handsResults      = res;
+    activePinchPoints = [];   // 每帧清空，重新填充
 
-    // 更新手势调试徽章
     const badge = document.getElementById('hand-badge');
     if (!res.multiHandLandmarks || res.multiHandLandmarks.length === 0) {
       if (badge) badge.textContent = '✋ NO HAND';
       return;
     }
-    if (badge) badge.textContent = `✋ ${res.multiHandLandmarks.length} HAND${res.multiHandLandmarks.length > 1 ? 'S' : ''} DETECTED`;
 
+    const parts = [`✋ ${res.multiHandLandmarks.length}H`];
     for (const lm of res.multiHandLandmarks) {
-      const indexTip = mapToCanvas(lm[8].x, lm[8].y);
-      const thumbTip = mapToCanvas(lm[4].x, lm[4].y);
+      const indexTip  = mapToCanvas(lm[8].x, lm[8].y);
+      const thumbTip  = mapToCanvas(lm[4].x, lm[4].y);
       const pinchDist = Math.hypot(indexTip.x - thumbTip.x, indexTip.y - thumbTip.y);
-
-      // 捏合阈值：像素距离 < 60px（原来是 W*0.07 约90px，太大且不直观）
-      // 捏合时在徽章上显示距离，方便调试
-      if (badge) badge.textContent += ` | pinch: ${Math.round(pinchDist)}px`;
-      if (pinchDist < 60) {
-        activePinchPoint = { x: (indexTip.x + thumbTip.x) / 2, y: (indexTip.y + thumbTip.y) / 2 };
-        if (badge) badge.textContent += ' 🤌 PINCH!';
-        break;
+      const pinched   = pinchDist < 60;
+      parts.push(`${Math.round(pinchDist)}px${pinched ? '🤌' : ''}`);
+      if (pinched) {
+        activePinchPoints.push({
+          x: (indexTip.x + thumbTip.x) / 2,
+          y: (indexTip.y + thumbTip.y) / 2,
+        });
       }
     }
+    if (badge) badge.textContent = parts.join(' | ');
   });
 }
 
@@ -1239,10 +1220,11 @@ function _tickDrawMode() {
   const nonFieldParticles = particles.filter(p => p.sizeClass !== 'field');
   const total = nonFieldParticles.length || 1;
 
-  if (activePinchPoint) {
+  if (activePinchPoints.length > 0) {
+    const _ap = activePinchPoints[0];
     // Count particles within gather radius
     const gathered = nonFieldParticles.filter(p => {
-      const dx = p.x - activePinchPoint.x, dy = p.y - activePinchPoint.y;
+      const dx = p.x - _ap.x, dy = p.y - _ap.y;
       return dx*dx + dy*dy < GATHER_RADIUS * GATHER_RADIUS;
     }).length;
     const ratio = gathered / total;
@@ -1251,16 +1233,14 @@ function _tickDrawMode() {
       dm.phase = 'gathering';
       if (ratio >= GATHER_THRESHOLD) {
         dm.gatherTimer++;
-        // Show gathering progress on badge
         const pct = Math.round(dm.gatherTimer / GATHER_FRAMES * 100);
         const badge = document.getElementById('hand-badge');
         if (badge) badge.textContent = `🤌 GATHERING ${pct}% — keep still…`;
       } else {
-        dm.gatherTimer = Math.max(0, dm.gatherTimer - 2); // decay if hand moves away
+        dm.gatherTimer = Math.max(0, dm.gatherTimer - 2);
       }
 
       if (dm.gatherTimer >= GATHER_FRAMES) {
-        // 🎉 Trigger draw mode!
         dm.phase = 'drawing';
         dm.strokePath = [];
         dm.gatherTimer = 0;
@@ -1270,8 +1250,7 @@ function _tickDrawMode() {
     }
 
     if (dm.phase === 'drawing') {
-      // Record hand trajectory
-      dm.strokePath.push({ x: activePinchPoint.x, y: activePinchPoint.y, t: Date.now() });
+      dm.strokePath.push({ x: _ap.x, y: _ap.y, t: Date.now() });
       if (dm.strokePath.length > MAX_PATH_POINTS) dm.strokePath.shift();
 
       // Assign each particle a target point on the stroke path
@@ -1294,7 +1273,7 @@ function _tickDrawMode() {
     }
 
   } else {
-    // Pinch released
+    // 所有手都松开了
     if (dm.phase === 'drawing') {
       dm.phase = 'dissolving';
       dm.dissolveTimer = 0;
@@ -1356,17 +1335,17 @@ function _drawStrokeOverlay() {
   }
 
   // Glow dot at current pinch position
-  if (activePinchPoint) {
+  for (const _ap of activePinchPoints) {
     const grd = ctx.createRadialGradient(
-      activePinchPoint.x, activePinchPoint.y, 0,
-      activePinchPoint.x, activePinchPoint.y, 40
+      _ap.x, _ap.y, 0,
+      _ap.x, _ap.y, 40
     );
     grd.addColorStop(0,   'rgba(255,255,255,0.5)');
     grd.addColorStop(0.4, 'rgba(255,255,255,0.1)');
     grd.addColorStop(1,   'rgba(255,255,255,0)');
     ctx.fillStyle = grd;
     ctx.beginPath();
-    ctx.arc(activePinchPoint.x, activePinchPoint.y, 40, 0, Math.PI*2);
+    ctx.arc(_ap.x, _ap.y, 40, 0, Math.PI*2);
     ctx.fill();
   }
 
@@ -1392,7 +1371,7 @@ function loop() {
     ctx.save();
     ctx.translate(W, 0);
     ctx.scale(-1, 1);          // mirror horizontally (selfie view)
-    ctx.globalAlpha = 0.08;
+    ctx.globalAlpha = 0.05;
     ctx.drawImage(video, dx, dy, dw, dh);  // cover-fit, no stretch
     ctx.restore();
     ctx.globalAlpha = 1;
@@ -1433,16 +1412,16 @@ function loop() {
         ctx.fill();
       }
 
-      // Highlight pinch point when active
-      if (activePinchPoint) {
+      // 高亮所有捏合点（支持双手）
+      for (const pt of activePinchPoints) {
         ctx.beginPath();
-        ctx.arc(activePinchPoint.x, activePinchPoint.y, 12, 0, TWO_PI);
+        ctx.arc(pt.x, pt.y, 14, 0, TWO_PI);
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
         ctx.lineWidth   = 2;
         ctx.stroke();
         ctx.beginPath();
-        ctx.arc(activePinchPoint.x, activePinchPoint.y, 4, 0, TWO_PI);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.arc(pt.x, pt.y, 4, 0, TWO_PI);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
         ctx.fill();
       }
     }
