@@ -59,7 +59,7 @@ body {
 /* Legend panel */
 #legend {
   position: absolute;
-  right: 22px;
+  left: 22px;
   top: 50%;
   transform: translateY(-50%);
   background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1));
@@ -207,12 +207,14 @@ body {
   bottom: 60px;
   left: 50%;
   transform: translateX(-50%);
-  color: rgba(30,40,60,0.28);
+  color: rgba(30,40,60,0.72);
   font-size: 11px;
+  font-weight: 300;
   letter-spacing: 3px;
   text-align: center;
   pointer-events: none;
   white-space: nowrap;
+  text-shadow: 0 1px 4px rgba(255,255,255,0.6), 0 0 16px rgba(255,255,255,0.4);
   animation: breath 4s ease-in-out infinite;
 }
 
@@ -414,7 +416,8 @@ body {
   display: inline-block;
   text-align: center;
 }
-#corner-qr-box canvas, #corner-qr-box img {
+/* qrcodejs appends both a <canvas> and an <img> fallback — show only canvas */
+#corner-qr-box canvas {
   display: block !important;
   background: #fff;
   border-radius: 6px;
@@ -423,6 +426,9 @@ body {
   box-shadow: 0 2px 8px rgba(31,38,135,0.08);
   width: 120px !important;
   height: 120px !important;
+}
+#corner-qr-box img {
+  display: none !important;
 }
 #corner-qr-url {
   font-size: 9px;
