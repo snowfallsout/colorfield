@@ -1,0 +1,16 @@
+{
+	"/(app)": [
+		"src/routes/(app)/+layout.ts"
+	],
+	"/": [
+		"src/routes/+page.ts"
+	],
+	"/(app)/display": [
+		"src/routes/(app)/display/+page.server.ts",
+		"src/routes/(app)/+layout.ts"
+	],
+	"/(app)/mobile": [
+		"src/routes/(app)/mobile/+page.server.ts",
+		"src/routes/(app)/+layout.ts"
+	]
+}
