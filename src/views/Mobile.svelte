@@ -17,7 +17,7 @@
   };
 
   onMount(() => {
-    getMeta().then((data) => (meta = data)).catch(() => {});
+    getMeta().then((data) => (meta = data)).catch((e) => console.warn('meta load failed', e));
     socket = connectSocket();
     socket.on('lucky_color', ({ luckyPhrase }) => (lucky = luckyPhrase || ''));
     return () => socket.close();
@@ -32,7 +32,7 @@
       <option value={item}>{item} · {meta.names[item]}</option>
     {/each}
   </select>
-  <button on:click={submit} disabled={!mbti}>加入画布</button>
+  <button onclick={submit} disabled={!mbti}>加入画布</button>
   {#if submitted}
     <p>{submitted} {meta.names[submitted]}</p>
     {#if lucky}<p>{lucky}</p>{/if}

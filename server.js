@@ -7,9 +7,27 @@ const fs = require('fs');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
+const requestWindowMs = 60_000;
+const maxRequestsPerWindow = 240;
+const rateLog = new Map();
 
 app.use(express.json());
+app.use((req, res, next) => {
+  const now = Date.now();
+  const key = req.ip || req.socket.remoteAddress || 'unknown';
+  const hit = rateLog.get(key);
+  if (!hit || now - hit.start > requestWindowMs) {
+    rateLog.set(key, { start: now, count: 1 });
+    return next();
+  }
+  hit.count += 1;
+  if (hit.count > maxRequestsPerWindow) return res.status(429).json({ error: 'Too many requests' });
+  return next();
+});
 const DIST_DIR = path.join(__dirname, 'dist');
+const INDEX_HTML = fs.existsSync(path.join(DIST_DIR, 'index.html'))
+  ? fs.readFileSync(path.join(DIST_DIR, 'index.html'), 'utf8')
+  : '';
 app.use(express.static(DIST_DIR));
 
 // ── MBTI Data ─────────────────────────────────────────────────────────────────
@@ -130,7 +148,8 @@ app.delete('/api/sessions/:id', (req, res) => {
 });
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(DIST_DIR, 'index.html'));
+  if (!INDEX_HTML) return res.status(500).send('Build output missing. Run npm start again.');
+  return res.type('html').send(INDEX_HTML);
 });
 
 // ── Socket.IO ─────────────────────────────────────────────────────────────────

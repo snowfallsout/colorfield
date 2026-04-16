@@ -50,7 +50,7 @@
     resize();
     addEventListener('resize', resize);
 
-    getMeta().then((data) => (meta = data)).catch(() => {});
+    getMeta().then((data) => (meta = data)).catch((e) => console.warn('meta load failed', e));
     const socket = connectSocket();
     socket.on('state', (data) => {
       counts = data.counts || {};
