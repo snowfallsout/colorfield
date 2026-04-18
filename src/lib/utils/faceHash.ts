@@ -1,0 +1,20 @@
+// Utilities for smile emoji system
+export function faceHash(x: number, y: number) {
+  return `${Math.round(x / 32)}_${Math.round(y / 32)}`;
+}
+
+export const SMILE_EMOJIS = [
+  '🔴','🟠','🟡','🟢','🔵','🟣','⚫','⚪','🟤',
+  '🔶','🔷','🔸','🔹','🔺','🔻','💠','🔘','🔲','🔳',
+  '✨','💫','⚡','🔥','💥','🌟','⭐','🌈',
+  '☀️','🌤️','⛅','🌥️','☁️','🌦️','🌧️','⛈️','🌩️','🌨️',
+  '❄️','☃️','⛄','🌬️','💨','🌀','🌊','💧','💦','☔',
+  '⛱️','🌙','🌛','🌜','🌚','🌝','🌞','☄️','🌪️',
+  '🌱','🌿','🍀','🍃','🍂','🍁','🌵','🌾','🎋','🎍',
+  '🌺','🌸','🌼','🌻','🌹','🥀','🌷','🪷','🪴',
+  '🌲','🌳','🌴','🪵','🪨',
+];
+
+export function pickRandomEmoji() {
+  return SMILE_EMOJIS[Math.floor(Math.random() * SMILE_EMOJIS.length)];
+}

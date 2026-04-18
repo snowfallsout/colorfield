@@ -1,3 +1,25 @@
+/**
+ * media.ts — Media/sensor stores and helpers
+ *
+ * Purpose:
+ * - Provide normalized, lightweight stores for camera/crowd/interaction data.
+ * - Keep DOM refs (video element) and flags separate from raw pixel processing.
+ *
+ * Types:
+ * - `CrowdMember` — normalized face/center data (x,y in [0,1]).
+ * - `InteractionPoint` — normalized hand/interaction point.
+ *
+ * Exports:
+ * - `videoEl`, `camOn` — DOM refs and camera flag.
+ * - `crowd`, `CROWD_CAP` — tracked crowd members array and capacity.
+ * - `activeInteractions`, `ACTIVE_CAP` — active hand/interaction positions.
+ * - `emotion` — derived lightweight emotion flag.
+ * - lifecycle/helpers: `setCrowd`, `pushCrowdMember`, `setActiveInteractions`, `clearAllSensors`, `initCamera`, `stopCamera`.
+ *
+ * Notes:
+ * - All coordinates are normalized (0..1). `y` follows MediaPipe convention (top→bottom).
+ */
+
 import { writable } from 'svelte/store';
 
 // Normalized coords only: x,y in [0,1], y is top→bottom as MediaPipe

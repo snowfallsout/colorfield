@@ -63,3 +63,9 @@ export function emit(event: string, payload: any) { safeEmit(event, payload); }
 export function disconnect() {
   if (socket) { socket.disconnect(); socket = null; }
 }
+
+// Allow consumers to register custom event handlers
+export function on(event: string, cb: (...args: any[]) => void) {
+  if (!socket) return;
+  try { socket.on(event, cb); } catch (e) { /* ignore */ }
+}

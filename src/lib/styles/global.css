@@ -1,0 +1,59 @@
+/* Global reset and base styles migrated from static/display.html */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+	background: #f5f8ff;
+	overflow: hidden;
+	font-family: -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* Canvas full-bleed */
+#canvas {
+	position: fixed;
+	inset: 0;
+	z-index: 10;
+}
+
+/* UI overlay container */
+#ui {
+	position: fixed;
+	inset: 0;
+	z-index: 20;
+	pointer-events: none;
+}
+
+/* Interaction hint and waiting animations (used by Footer layout) */
+@keyframes breath { 0%,100% { opacity:.18; } 50% { opacity:.45; } }
+.interaction-hint {
+	color: rgba(30,40,60,0.72);
+	font-size: 11px;
+	font-weight: 300;
+	letter-spacing: 3px;
+	text-align: center;
+	pointer-events: none;
+	white-space: nowrap;
+	text-shadow: 0 1px 4px rgba(255,255,255,0.6), 0 0 16px rgba(255,255,255,0.4);
+	animation: breath 4s ease-in-out infinite;
+}
+
+/* Noise overlay (film grain) */
+.noise-overlay {
+	position: fixed; inset: 0;
+	pointer-events: none; z-index: 999;
+	opacity: 0.12; mix-blend-mode: multiply;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+	background-repeat: repeat;
+}
+
+/* Corner QR canvas sizing fallback */
+.corner-qr-box canvas {
+	display: block !important;
+	background: #fff;
+	border-radius: 6px;
+	padding: 5px;
+	border: 1px solid rgba(200,210,230,0.45);
+	box-shadow: 0 2px 8px rgba(31,38,135,0.08);
+	width: 120px !important;
+	height: 120px !important;
+}
+

@@ -14,8 +14,8 @@
   let url = '';
   let qrBox: HTMLDivElement | null = null;
   let urlEl: HTMLDivElement | null = null;
-  let currentSessionName = '';
-  let unsubSession: () => void | null = null;
+  let currentSessionName: string | null = null;
+  let unsubSession: (() => void) | null = null;
 
   // capture origin on client to build an absolute share URL
   onMount(() => {

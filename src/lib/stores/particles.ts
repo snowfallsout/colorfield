@@ -1,3 +1,18 @@
+/**
+ * particles.ts — lightweight spawn/particle queue store
+ *
+ * Purpose:
+ * - Provide a simple FIFO queue (Svelte store) for spawn/particle events that
+ *   the display layer consumes asynchronously.
+ *
+ * Exports:
+ * - `SpawnEvent` type — payload shape for spawn events.
+ * - `spawnQueue` — `writable<SpawnEvent[]>` backing the queue.
+ * - `pushSpawn(e)` — push event into queue (keeps capacity).
+ * - `popSpawn()` — consume oldest event (used by display loop).
+ * - `seedAmbient(n)` — helper to enqueue ambient/seed events.
+ */
+
 import { writable } from 'svelte/store';
 
 export type SpawnEvent = { mbti: string; color?: string; nickname?: string; counts?: Record<string, number>; total?: number };

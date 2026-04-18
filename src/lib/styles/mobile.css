@@ -1,0 +1,11 @@
+/* mobile.css
+ * Mobile-scoped shared styles (placeholder)
+ * Populate with tokens such as .btn, .mbti-card, .dim-row, etc.
+ */
+
+:root{
+  --mobile-gap:12px;
+}
+
+/* Placeholder utilities */
+.mf-center{display:flex;align-items:center;justify-content:center}
