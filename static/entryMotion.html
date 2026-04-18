@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Particle Orbit Interaction - Mouse Tracking</title>
+    <style>
+        :root {
+            --bg-color: #0a0a0c;
+            --card-bg: #16161a;
+            --text-color: #ffffff;
+            --accent-color: #444;
+            --orbit-radius: 45px;
+        }
+
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+        }
+
+        .container {
+            position: relative;
+            width: 600px;
+            height: 400px;
+            background: var(--card-bg);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: none; /* 隱藏鼠標 */
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        /* 鼠標位置的視覺引導圈與 ENTER 文字 */
+        .mouse-guide {
+            position: absolute;
+            width: calc(var(--orbit-radius) * 2);
+            height: calc(var(--orbit-radius) * 2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%) scale(0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            z-index: 5;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+        }
+
+        .mouse-guide.active {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .enter-text {
+            color: #fff;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+            animation: pulse-text 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-text {
+            0%, 100% { opacity: 0.6; transform: scale(0.95); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+
+        .hint {
+            color: var(--text-color);
+            font-size: 0.8rem;
+            font-weight: 200;
+            letter-spacing: 2px;
+            z-index: 2;
+            opacity: 0.2;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="card">
+        <div class="mouse-guide" id="guide">
+            <span class="enter-text">ENTER!</span>
+        </div>
+        <div class="hint">16 COLORFIELD</div>
+        <canvas id="particleCanvas"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        const card = document.getElementById('card');
+        const guide = document.getElementById('guide');
+
+        let width, height;
+        let isHovered = false;
+        let particles = [];
+        let mouseX = 0;
+        let mouseY = 0;
+
+        const MBTI_COLORS = [
+            '#4B0082', '#6495ED', '#FF4500', '#FF00FF',
+            '#00A86B', '#DA70D6', '#FC913A', '#92FE9D',
+            '#95A5A6', '#BDB76B', '#4682B4', '#FFB6C1',
+            '#4A4A4A', '#00CED1', '#FF2400', '#7B68EE'
+        ];
+
+        const CONFIG = {
+            particleCount: 16,
+            orbitRadius: 45,
+            attractionForce: 0.28,
+            tangentForce: 0.15,
+            friction: 0.94,
+            trailLength: 15
+        };
+
+        class Particle {
+            constructor(index) {
+                this.index = index;
+                this.reset();
+                this.color = MBTI_COLORS[index % MBTI_COLORS.length];
+                this.size = Math.random() * 1.5 + 2.5;
+                this.history = [];
+            }
+
+            reset() {
+                const side = Math.floor(Math.random() * 4);
+                if (side === 0) { this.x = Math.random() * width; this.y = -50; }
+                else if (side === 1) { this.x = width + 50; this.y = Math.random() * height; }
+                else if (side === 2) { this.x = Math.random() * width; this.y = height + 50; }
+                else { this.x = -50; this.y = Math.random() * height; }
+
+                this.vx = (Math.random() - 0.5) * 5;
+                this.vy = (Math.random() - 0.5) * 5;
+                this.alpha = 0;
+            }
+
+            update() {
+                const dx = mouseX - this.x;
+                const dy = mouseY - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (isHovered) {
+                    this.alpha += (1 - this.alpha) * 0.08;
+                    
+                    if (distance > CONFIG.orbitRadius + 15) {
+                        this.vx += (dx / distance) * CONFIG.attractionForce;
+                        this.vy += (dy / distance) * CONFIG.attractionForce;
+                    } else {
+                        const pull = (distance - CONFIG.orbitRadius) * 0.25;
+                        this.vx -= (dx / distance) * pull;
+                        this.vy -= (dy / distance) * pull;
+
+                        // 順時針旋轉
+                        this.vx += (dy / distance) * CONFIG.tangentForce;
+                        this.vy -= (dx / distance) * CONFIG.tangentForce;
+                    }
+                } else {
+                    this.alpha *= 0.94;
+                    if (this.alpha < 0.01) this.reset();
+                }
+
+                this.vx *= CONFIG.friction;
+                this.vy *= CONFIG.friction;
+                this.x += this.vx;
+                this.y += this.vy;
+
+                this.history.push({ x: this.x, y: this.y });
+                if (this.history.length > CONFIG.trailLength) this.history.shift();
+            }
+
+            draw() {
+                if (this.alpha <= 0.01) return;
+
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                
+                // 拖尾效果
+                if (this.history.length > 2) {
+                    ctx.beginPath();
+                    ctx.moveTo(this.history[0].x, this.history[0].y);
+                    for (let i = 1; i < this.history.length; i++) {
+                        ctx.lineTo(this.history[i].x, this.history[i].y);
+                    }
+                    ctx.strokeStyle = this.color;
+                    ctx.lineWidth = this.size * 0.5;
+                    ctx.lineCap = 'round';
+                    ctx.stroke();
+                }
+
+                // 核心
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = this.color;
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
+
+        function init() {
+            resize();
+            mouseX = width / 2;
+            mouseY = height / 2;
+            particles = Array.from({length: CONFIG.particleCount}, (_, i) => new Particle(i));
+            animate();
+        }
+
+        function resize() {
+            const rect = card.getBoundingClientRect();
+            width = rect.width;
+            height = rect.height;
+            canvas.width = width * window.devicePixelRatio;
+            canvas.height = height * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+            
+            guide.style.left = `${mouseX}px`;
+            guide.style.top = `${mouseY}px`;
+        });
+
+        card.addEventListener('mouseenter', () => {
+            isHovered = true;
+            guide.classList.add('active');
+        });
+        
+        card.addEventListener('mouseleave', () => {
+            isHovered = false;
+            guide.classList.remove('active');
+        });
+
+        window.addEventListener('resize', resize);
+        init();
+    </script>
+</body>
+</html>
