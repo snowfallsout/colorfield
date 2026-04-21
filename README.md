@@ -1,4 +1,3 @@
-```markdown name=README.md
 # Colorfield — 給零經驗使用者的完全操作指南 🎨🚀
 
 這份 README 針對「完全沒有開發經驗的小白」撰寫，步驟非常詳細，示範如何：
@@ -199,6 +198,4 @@ npm start
 docker build -t colorfield:latest .
 docker run -d -p 3000:3000 --name colorfield colorfield:latest
 # 開啟 http://localhost:3000/display.html
-```
-
 ```
