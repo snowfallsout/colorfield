@@ -12,7 +12,7 @@ node server.js
 
 ## Offline single-file demo
 
-- Open `public/app.html` directly (`file://.../public/app.html`) for a local-only offline demo.
+- Open `app.html` directly (`file://.../app.html`) for a local-only offline demo.
 - This is for single-machine demos (counts stored in browser `localStorage`) and is **not** a replacement for the socket-enabled server workflow above.
 
 ---
