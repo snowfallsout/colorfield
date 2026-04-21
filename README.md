@@ -1,4 +1,4 @@
-# Colorfield
+# Ink Lumina
 
 Live MBTI particle-art display. Phones scan a QR on the big screen, submit their MBTI type, and particles bloom on the canvas.
 
@@ -40,7 +40,7 @@ The QR in the panel updates, and the corner QR on the main screen updates immedi
 Run this once in an **admin PowerShell**:
 
 ```powershell
-New-NetFirewallRule -DisplayName "Colorfield 3000" -Direction Inbound -LocalPort 3000 -Protocol TCP -Action Allow
+New-NetFirewallRule -DisplayName "inklumina 3000" -Direction Inbound -LocalPort 3000 -Protocol TCP -Action Allow
 ```
 
 ### 4 — Set WiFi to Private network
