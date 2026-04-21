@@ -136,7 +136,7 @@
     });
 
     document.addEventListener('keydown', (event) => {
-      if (event.key === 'Enter' && document.activeElement !== document.getElementById('submit-btn')) {
+      if (event.key === 'Enter' && document.activeElement !== document.getElementById('submit-btn') && document.activeElement !== select) {
         event.preventDefault();
         submitMbti(select.value);
       }
@@ -173,7 +173,7 @@
         const normalized = {};
         MBTI_TYPES.forEach((type) => {
           const value = Number(parsed[type] || 0);
-          normalized[type] = Number.isFinite(value) && value > 0 ? Math.floor(value) : 0;
+          normalized[type] = Number.isFinite(value) && value >= 0 ? Math.floor(value) : 0;
         });
         return normalized;
       } catch (_) {
@@ -204,7 +204,8 @@
     }
 
     function resizeCanvas() {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const MAX_DPR = 2;
+      const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
       const rect = canvas.getBoundingClientRect();
       canvas.width = Math.floor(rect.width * dpr);
       canvas.height = Math.floor(rect.height * dpr);
