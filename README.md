@@ -1,10 +1,10 @@
-# Colorfield — 給零經驗使用者的完全操作指南 🎨🚀
-
 # Colorfield — 線上 Demo 🎨
 
 👉 先看 Demo（不用安裝）：https://snowfallsout.github.io/colorfield/  
 
 這個 demo 是「純前端」的展示頁（相機/粒子效果），不會儲存任何數據或上傳資料。若你想在本機跑完整伺服器版本，請往下看操作指引。
+
+# Colorfield — 給零經驗使用者的完全操作指南 🎨🚀
 
 這份 README 針對「完全沒有開發經驗的小白」撰寫，步驟非常詳細，示範如何：
 - 從 GitHub 網頁下載完整 repo ZIP（純 WebUI）⬇️  
