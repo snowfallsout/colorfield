@@ -14,8 +14,9 @@
  */
 
 import { writable } from 'svelte/store';
+import { MBTI_PALETTES } from '$lib/config/mbti';
 
-export type SpawnEvent = { mbti: string; color?: string; nickname?: string; counts?: Record<string, number>; total?: number };
+export type SpawnEvent = { mbti: string; color?: string; nickname?: string; counts?: Record<string, number>; total?: number; ts?: number };
 
 export const spawnQueue = writable<SpawnEvent[]>([]);
 
@@ -27,7 +28,13 @@ export function pushSpawn(e: SpawnEvent) {
       // drop oldest to maintain cap
       q.shift();
     }
-    q.push({ ...e, ts: Date.now() });
+    const mbtiKey = (e?.mbti || '').toUpperCase();
+    let color = e.color;
+    if (mbtiKey && mbtiKey !== '__SEED' && !color) {
+      const palette = MBTI_PALETTES[mbtiKey as keyof typeof MBTI_PALETTES];
+      color = palette ? (palette.mid || palette.core) : undefined;
+    }
+    q.push({ ...e, mbti: mbtiKey, color, ts: Date.now() });
     return q;
   });
 }

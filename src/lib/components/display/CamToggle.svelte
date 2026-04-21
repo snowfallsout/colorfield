@@ -33,7 +33,7 @@
   });
 </script>
 
-<button id="cam-toggle" class="cam-toggle" class:on={$camOn} on:click={toggleCamera}>
+<button id="cam-toggle" class="cam-toggle" class:on={$camOn} onclick={toggleCamera}>
   { $camOn ? '◎ 摄像头 ON' : '◎ 摄像头 OFF' }
 </button>
 
@@ -42,6 +42,7 @@
   position: absolute;
   top: 28px;
   right: 22px;
+  z-index: 21;
   background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.15));
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255,255,255,0.5);

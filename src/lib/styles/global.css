@@ -11,7 +11,8 @@ body {
 #canvas {
 	position: fixed;
 	inset: 0;
-	z-index: 10;
+	/* place canvas behind UI overlays */
+	z-index: -1;
 }
 
 /* UI overlay container */

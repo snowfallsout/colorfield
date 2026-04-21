@@ -44,7 +44,7 @@ Acceptance criteria
 Estimate
 - Scaffold + basic components: 0.5–1h
 - Port JS → Svelte + socket integration: 1–2h
-- Canvas refactor + QA: 1h
+- Canvas refactor + QA: 1–2h
 
 Notes
 - Keep `static/mobile.html` untouched for fallback until after migration verification.

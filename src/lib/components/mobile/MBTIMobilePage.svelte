@@ -110,7 +110,7 @@ function submitMBTI() {
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;700;900&display=swap');
-*:*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
 :global(html,body){height:100%;overflow:hidden;background:#f4f5f8;color:#1a1a22;font-family:'Inter',-apple-system,sans-serif}
 
 /* Soft ambient wash on the white page so it never looks flat */

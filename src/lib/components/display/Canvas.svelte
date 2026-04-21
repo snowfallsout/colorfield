@@ -81,7 +81,15 @@
     for (let i = 0; i < perFrameSpawnCap; i++) {
       const ev = popSpawn();
       if (!ev) break;
-      engine.spawnFromEvent(ev);
+      // Backwards-compatible handling for spawn events:
+      // - '__seed' events enqueue ambient seed count in `color` field
+      // - other events map to spawnMBTI
+      if (ev.mbti === '__seed') {
+        const n = Number(ev.color) || 25;
+        engine.seedAmbient(n);
+      } else {
+        engine.spawnMBTI(ev.mbti, ev.color, ev.counts as Record<string, number> | undefined);
+      }
     }
 
     engine.step(dt);
@@ -105,6 +113,9 @@
     engine = new ParticleEngine({ max: 1200 }); // configurable max particles; tune for performance
     resize();
     engine.seedAmbient(25); // initial ambient particles; adds visual interest before interactions start
+    // Expose engine for quick debugging in browser console
+    try { (window as any).__particleEngine = engine; } catch (e) { /* ignore */ }
+    console.debug('ParticleEngine seeded, count=', engine.particles.length);
 
     // initialize last timestamp and capture video element for mapping
     last = performance.now();
@@ -112,7 +123,11 @@
 
     // subscribe stores for interaction mapping
     const unsubCrowd = crowd.subscribe(list => {
-      // not used directly here; could be fed to engine if needed
+      const faces = list.map(p => {
+        const c = mapToCanvas(p.x, p.y);
+        return { x: c.x, y: c.y, smile: (p as any).smile || false };
+      });
+      engine?.setFaces(faces);
     });
     const unsubActive = activeInteractions.subscribe(list => {
       const pts = list.map(p => { // map normalized coords to canvas pixels for engine interactions
@@ -128,6 +143,11 @@
 
     loop();
 
+    // periodic debug snapshot (every 2s) to help diagnose missing particles
+    const dbg = setInterval(() => {
+      try { console.debug('particle debug:', (window as any).__particleEngine?.particles?.length || 0); } catch(e) {}
+    }, 2000);
+
     onDestroy(() => {
       /* 
       Cleanup:
@@ -136,6 +156,7 @@
       cancelAnimationFrame(rafId);
       unsubCrowd(); unsubActive();
       window.removeEventListener('resize', resize);
+      clearInterval(dbg);
     });
   });
 </script>
@@ -143,5 +164,5 @@
 <canvas bind:this={canvas} id="canvas"></canvas>
 
 <style>
-  canvas { position: fixed; inset: 0; z-index: 10; }
+  canvas { position: fixed; inset: 0; }
 </style>

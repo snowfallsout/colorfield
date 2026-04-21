@@ -20,7 +20,7 @@
  */
 
 import { writable, derived } from 'svelte/store';
-import { pushSpawn } from '$lib/stores/particles';
+import { pushSpawn } from '$lib/runes/particles';
 
 export const mbtiCounts = writable<Record<string, number>>({});
 export const total = derived(mbtiCounts, $ => Object.values($).reduce((a, b) => a + b, 0));

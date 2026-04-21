@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import { crowd } from '$lib/stores/media';
+import { crowd } from '$lib/runes/media';
 import { faceHash, pickRandomEmoji } from '$lib/utils/faceHash';
 
 type Face = any;

@@ -1,8 +1,9 @@
 import { browser } from '$app/environment';
-import { mbtiCounts } from '$lib/stores/mbti';
-import { sessionName, history } from '$lib/stores/session';
-import { pushSpawn } from '$lib/stores/particles';
-import { showToast } from '$lib/stores/ui';
+import { mbtiCounts } from '$lib/runes/mbti';
+import { MBTI_PALETTES } from '$lib/config/mbti';
+import { sessionName, history } from '$lib/runes/session';
+import { pushSpawn } from '$lib/runes/particles';
+import { showToast } from '$lib/runes/ui';
 
 let socket: any = null;
 
@@ -14,14 +15,18 @@ function safeEmit(event: string, payload: any) {
 export async function connect(opts?: { url?: string }) {
   if (!browser) return;
   if (socket) return;
+  // determine socket URL priority:
+  // 1. explicit opts.url
+  // 2. undefined -> connect to same origin
+  const url = opts?.url ?? undefined;
 
   // Try to use global `io` injected by CDN first, else dynamic import
   if ((window as any).io) {
-    socket = (window as any).io(opts?.url || undefined);
+    socket = (window as any).io(url);
   } else {
     try {
       const mod = await import('socket.io-client');
-      socket = mod.io(opts?.url || undefined);
+      socket = mod.io(url);
     } catch (e) {
       console.warn('socket.io client not available:', e);
       showToast('Socket unavailable', '#ff4444');
@@ -41,7 +46,10 @@ export async function connect(opts?: { url?: string }) {
   socket.on('spawn_particles', (data: any) => {
     try {
       // Push to spawnQueue; DisplayCanvas will consume it
-      pushSpawn({ mbti: data.mbti, color: data.color, nickname: data.nickname, counts: data.counts, total: data.total });
+      const mbtiKey = (data?.mbti || '').toUpperCase();
+      const palette = MBTI_PALETTES[mbtiKey as keyof typeof MBTI_PALETTES];
+      const color = data.color || (palette ? palette.mid || palette.core : undefined);
+      pushSpawn({ mbti: mbtiKey, color, nickname: data.nickname, counts: data.counts, total: data.total });
       if (data.counts) mbtiCounts.set({ ...data.counts });
       if (data.total !== undefined) {
         // no-op here; UI can derive total from mbtiCounts
