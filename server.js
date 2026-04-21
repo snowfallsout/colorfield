@@ -14,6 +14,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Route shortcuts
 app.get('/', (req, res) => res.redirect('/display.html'));
 app.get('/join', (req, res) => res.redirect('/mobile.html'));
+app.get('/app.html', (req, res) => res.sendFile(path.join(__dirname, 'app.html')));
 
 // ── MBTI Data ─────────────────────────────────────────────────────────────────
 const MBTI_COLORS = {
