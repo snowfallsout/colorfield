@@ -1,4 +1,6 @@
-# inklumina — 線上 Demo 🎨
+# Ink Lumina — 墨境流光
+
+## Online Demo 🎨
 
 👉 先看 Demo（不用安裝）：https://snowfallsout.github.io/inklumina/  
 
@@ -6,7 +8,7 @@
 
 ---
 
-# inklumina — 給零經驗使用者的完全操作指南 🎨🚀
+# inklumina — 🚀 給零經驗使用者的完全操作指南🚀
 
 這份 README 針對「完全沒有開發經驗的小白」撰寫，步驟非常詳細，示範如何：
 - 從 GitHub 網頁下載完整 repo ZIP（純 WebUI）⬇️  
