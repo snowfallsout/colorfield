@@ -6,11 +6,13 @@
 export const ui = $state({
   toast: null as { msg: string; color?: string } | null,
   handBadgeText: '✋ NO HAND',
-  waitingVisible: true
+  waitingVisible: true,
+  waterOverlay: false
 } as {
   toast: { msg: string; color?: string } | null;
   handBadgeText: string;
   waitingVisible: boolean;
+  waterOverlay: boolean;
 });
 
 // Show a toast message and dismiss it automatically.
@@ -29,4 +31,13 @@ export function setHandBadge(text: string) {
 // Toggle the waiting indicator visibility.
 export function setWaitingVisible(visible: boolean) {
   ui.waitingVisible = visible;
+}
+
+// Toggle a UI-only water overlay (visual only, does not affect camera)
+export function toggleWaterOverlay() {
+  ui.waterOverlay = !ui.waterOverlay;
+}
+
+export function setWaterOverlay(visible: boolean) {
+  ui.waterOverlay = !!visible;
 }

@@ -3,7 +3,7 @@ import { get } from 'svelte/store';
 import QRCode from 'qrcode';
 import type { DeleteSessionResponse, SessionMutationResponse, SessionRecord, SessionsOverviewResponse } from '$lib/shared/contracts';
 import { buildJoinUrl, sanitizeHost, STORAGE_KEY } from './utils';
-import { displayState } from '../state';
+import { displayState } from '../../utils/state';
 
 export function restoreDisplayJoinHost(): void {
 	if (typeof window === 'undefined') return;

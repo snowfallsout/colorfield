@@ -9,8 +9,8 @@ import {
 	particles,
 	seedAmbient as seedPoolAmbient,
 	spawnMBTI as spawnPoolMBTI
-} from '../function/pool';
-import { prewarmAll } from '../function/sprites';
+} from '../utils/pool';
+import { prewarmAll } from '../utils/sprites';
 
 export type ParticleFace = { x: number; y: number; smile?: boolean };
 export type ParticleInteraction = { x: number; y: number; score?: number };

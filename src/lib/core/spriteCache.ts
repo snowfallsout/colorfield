@@ -4,8 +4,8 @@
   快取入口轉接到目前的 `config/mbti` 與 `function/sprites` 實作。
 */
 
-import { MBTI_ORDER, MBTI_PALETTES } from '../constants/mbti';
-import { getDotSprite, getSpriteSet } from '../function/sprites';
+import { MBTI_ORDER, MBTI_PALETTES } from '$lib/constants/mbti';
+import { getDotSprite, getSpriteSet } from '$lib/utils/sprites';
 
 export { MBTI_ORDER, MBTI_PALETTES };
 
