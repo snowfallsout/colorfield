@@ -7,16 +7,17 @@
  * single MBTI dimension. Calls `onselect` with `{ dimension, value }`.
  */
 import DimButton from './DimButton.svelte';
+import type { MobileDimensionOption, MobileDimensionSelection } from '$lib/services/mobile/mobile.logic';
 interface Props {
   dimension?: number;
-  values?: { value: string; hint?: string }[];
+  values?: readonly MobileDimensionOption[];
   selected?: string | null;
-  onselect?: (payload: { dimension: number; value: string }) => void;
+  onselect?: (payload: MobileDimensionSelection) => void;
 }
 
 const {
   dimension = 0 as number,
-  values = [] as { value: string; hint?: string }[],
+  values = [] as readonly MobileDimensionOption[],
   selected = null as string | null,
   onselect
 }: Props = $props();

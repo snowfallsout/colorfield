@@ -37,7 +37,7 @@ export function generateHoloCardImage(opts: { mbti: string; color: string; nickn
   hl.addColorStop(0,'rgba(255,255,255,0.28)'); hl.addColorStop(1,'rgba(255,255,255,0)');
   g.fillStyle = hl; g.fillRect(cardX,cardY,cardW,cardH*.4);
 
-  g.textBaseline='top'; g.textAlign='left'; g.fillStyle='rgba(255,255,255,0.95)'; g.font='600 26px Inter, sans-serif'; g.fillText('COLORFIELD',cardX+60,cardY+60);
+  g.textBaseline='top'; g.textAlign='left'; g.fillStyle='rgba(255,255,255,0.95)'; g.font='600 26px Inter, sans-serif'; g.fillText('INKLUMINA',cardX+60,cardY+60);
   g.fillStyle='rgba(255,255,255,0.75)'; g.font='300 22px Inter, sans-serif'; g.fillText('MBTI · PARTICLE ART',cardX+60,cardY+96);
 
   const now = new Date();
@@ -54,7 +54,7 @@ export function generateHoloCardImage(opts: { mbti: string; color: string; nickn
 
   g.textBaseline='bottom'; g.textAlign='left'; g.fillStyle='rgba(255,255,255,0.65)'; g.font='300 18px Inter, sans-serif'; g.fillText('INSIDE OUT THE COLOR', cardX + 60, cardY + cardH - 95);
   g.fillStyle='rgba(255,255,255,0.9)'; g.font='600 28px Inter, sans-serif'; g.fillText(mbti, cardX + 60, cardY + cardH - 60);
-  g.textAlign='right'; g.fillStyle='rgba(255,255,255,0.6)'; g.font='300 18px Inter, sans-serif'; g.fillText('colorfield.live', cardX + cardW - 60, cardY + cardH - 95);
+  g.textAlign='right'; g.fillStyle='rgba(255,255,255,0.6)'; g.font='300 18px Inter, sans-serif'; g.fillText('inklumina.live', cardX + cardW - 60, cardY + cardH - 95);
   g.fillStyle='rgba(255,255,255,0.95)'; g.font='500 28px Inter, sans-serif'; g.fillText('@snowfallsout', cardX + cardW - 60, cardY + cardH - 60);
 
   g.restore();

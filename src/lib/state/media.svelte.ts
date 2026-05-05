@@ -7,7 +7,7 @@
 import { browser } from '$app/environment';
 import settings from '$lib/config/settings';
 import { setHandBadge } from '$lib/state/ui.svelte';
-import { init as mediapipeInit, start as mediapipeStart, stop as mediapipeStop } from '$lib/services/mediapipe';
+import { preload as mediapipePreload, start as mediapipeStart, stop as mediapipeStop } from '$lib/services/mediapipe';
 
 export type CrowdMember = {
   id?: string;
@@ -42,8 +42,51 @@ export const CROWD_CAP = 30;
 // Maximum number of active interaction points kept in memory.
 export const ACTIVE_CAP = 8;
 
+// Keep a short loading dwell so the UI does not flash while still feeling responsive.
+const CAMERA_LOADING_MIN_MS = 900;
+
 let _starting = false;
 let _started = false;
+
+// Hold the loading state for a minimum duration so the UI does not flash.
+async function waitForLoadingFloor(startedAt: number): Promise<void> {
+  if (!browser) return;
+
+  const elapsed = performance.now() - startedAt;
+  const remaining = CAMERA_LOADING_MIN_MS - elapsed;
+  if (remaining <= 0) return;
+
+  await new Promise<void>((resolve) => {
+    window.setTimeout(resolve, remaining);
+  });
+}
+
+function createMediapipeOptions(): {
+  maxCrowd: number;
+  topNHands: number;
+  handsModelComplexity: 0 | 1;
+  handConfidenceThreshold: number;
+  faceConfidenceThreshold: number;
+} {
+  return {
+    maxCrowd: CROWD_CAP,
+    topNHands: Math.min(2, ACTIVE_CAP),
+    handsModelComplexity: 1,
+    handConfidenceThreshold: settings.mediapipe.handConfidenceThreshold,
+    faceConfidenceThreshold: settings.mediapipe.faceConfidenceThreshold
+  };
+}
+
+// Preload MediaPipe scripts and model constructors before the user opens the camera.
+export async function preloadCamera(): Promise<void> {
+  if (!browser) return;
+
+  try {
+    await mediapipePreload(createMediapipeOptions());
+  } catch (e) {
+    console.warn('preloadCamera failed:', e);
+  }
+}
 
 // Replace the current crowd snapshot with a trimmed, timestamped list.
 export function setCrowd(m: CrowdMember[]) {
@@ -78,6 +121,7 @@ export async function initCamera(): Promise<void> {
   if (!browser) return;
   if (_starting || _started) return;
 
+  const startedAt = performance.now();
   _starting = true;
   media.camLoading = true;
   media.camOn = false;
@@ -87,13 +131,7 @@ export async function initCamera(): Promise<void> {
     const el = ensureVideoElement();
     if (!el) throw new Error('video element is unavailable');
 
-    await mediapipeInit({
-      maxCrowd: CROWD_CAP,
-        topNHands: Math.min(2, ACTIVE_CAP),
-        handsModelComplexity: 1,
-      handConfidenceThreshold: settings.mediapipe.handConfidenceThreshold,
-      faceConfidenceThreshold: settings.mediapipe.faceConfidenceThreshold
-    });
+    await preloadCamera();
 
     await mediapipeStart(
       el,
@@ -108,18 +146,15 @@ export async function initCamera(): Promise<void> {
         setHandBadge(points.length > 0 ? `✋ ${points.length} PINCH` : '✋ NO HAND');
       },
       {
-        maxCrowd: CROWD_CAP,
-        topNHands: Math.min(2, ACTIVE_CAP),
-        minProcessingHz: 20,
-        handsModelComplexity: 1,
-        handConfidenceThreshold: settings.mediapipe.handConfidenceThreshold,
-        faceConfidenceThreshold: settings.mediapipe.faceConfidenceThreshold
+        ...createMediapipeOptions(),
+        minProcessingHz: 20
       }
     );
 
     media.camOn = true;
     _started = true;
     setHandBadge('✋ NO HAND');
+    await waitForLoadingFloor(startedAt);
   } catch (e) {
     console.warn('initCamera failed:', e);
     media.camOn = false;

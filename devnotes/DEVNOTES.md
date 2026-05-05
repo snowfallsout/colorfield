@@ -6,7 +6,7 @@ under `devnotes/DEVNOTES_{timestamp}.md` and reference it here.
 
 # DEVNOTES — Current
 
-Last snapshot: [DEVNOTES_2026-05-05T003000Z.md](DEVNOTES_2026-05-05T003000Z.md)
+Last snapshot: [DEVNOTES_2026-05-05T171702Z.md](DEVNOTES_2026-05-05T171702Z.md)
 
 Policy (short):
 
@@ -46,6 +46,12 @@ Recent activity (delta):
 - 2026-05-02: Added [DEVNOTES_2026-05-02T220000Z.md](DEVNOTES_2026-05-02T220000Z.md) recording the shared-constant deduplication for display/mobile utilities, including legend-row generation from shared MBTI data and the removal of duplicate smile/MBTI constant definitions from `utils/*`.
 - 2026-05-05: Added [DEVNOTES_2026-05-05T000500Z.md](DEVNOTES_2026-05-05T000500Z.md) recording the Vite dev-server fix: the config-time socket plugin path now uses relative imports instead of `$lib/*` aliases.
 - 2026-05-05: Added [DEVNOTES_2026-05-05T003000Z.md](DEVNOTES_2026-05-05T003000Z.md) recording the display camera/water toggle repair: remove the legacy auto-start camera owner from Canvas, add camera loading UI, and make the water toggle control canvas background fill independently from camera state.
+- 2026-05-05: Added [DEVNOTES_2026-05-05T111500Z.md](DEVNOTES_2026-05-05T111500Z.md) recording the display visual parity repair: fullscreen camera loading mask with a minimum wait floor, plus canvas-side water/camera compositing restored to match `static/display.html`.
+- 2026-05-05: Added [DEVNOTES_2026-05-05T123500Z.md](DEVNOTES_2026-05-05T123500Z.md) recording the session/QR repair round: per-session JSON files, qrcodejs-aligned join QR generation, and the direct-click Windows launcher for release users.
+- 2026-05-05: Added [DEVNOTES_2026-05-05T133000Z.md](DEVNOTES_2026-05-05T133000Z.md) recording the camera delay and launch update: MediaPipe preloading, parallel model initialization, shorter loading dwell, water-button gating, and a macOS `.command` launcher.
+- 2026-05-05: Added [DEVNOTES_2026-05-05T170104Z.md](DEVNOTES_2026-05-05T170104Z.md) recording the repo-wide branding cleanup: active socket contracts and helpers now use `InkLumina`, the session key now uses `inklumina_pc_ip`, and the remaining user-facing source string now reads `inklumina.live`.
+- 2026-05-05: Added [DEVNOTES_2026-05-05T171249Z.md](DEVNOTES_2026-05-05T171249Z.md) recording the mobile helper relocation: the mobile logic/canvas helpers now live under `src/lib/services/mobile/`, the Svelte state owner now lives under `src/lib/state/`, and the page/component imports were updated accordingly.
+- 2026-05-05: Added [DEVNOTES_2026-05-05T171702Z.md](DEVNOTES_2026-05-05T171702Z.md) recording the internal naming cleanup: socket contracts and helpers now use generic names, the session storage key is generic, and the QR script tag no longer carries a brand-prefixed data attribute.
 
 Next planned actions:
 
@@ -72,6 +78,9 @@ Next planned actions:
 - Continue clarifying the role split between top-level client services (`services/socket.ts`, `services/mediapipe.ts`) and route-specific display services under `services/display/*`.
 - Continue consolidating server-side behavior so dev/prod adapters share one owner for socket and session flow where practical.
 - Continue reducing duplicated literal data so `shared/constants/*` stays the sole owner of cross-domain MBTI and vision constants.
+- Keep active source branding aligned with `InkLumina` while leaving protected static reference files untouched unless explicitly authorized.
+- Keep mobile helper ownership aligned with `services/mobile` and `state/` so import paths stay consistent after file moves.
+- Keep internal identifiers generic unless the name itself must be user-visible plain text.
 
 <!-- End of current DEVNOTES index -->
 

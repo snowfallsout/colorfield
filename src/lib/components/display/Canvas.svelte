@@ -94,10 +94,40 @@
 
     engine.step(dt);
 
+    const video = media.videoEl || (document.getElementById('video-bg') as HTMLVideoElement | null);
+    const showCameraWater = !!(
+      ui.waterOverlay &&
+      media.camOn &&
+      video &&
+      video.readyState >= 2 &&
+      video.videoWidth > 0
+    );
+
     // clear and render
-    ctx.fillStyle = ui.waterOverlay ? 'rgba(245,248,255,0.14)' : 'rgba(245,248,255,1)';
+    ctx.fillStyle = showCameraWater ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,1)';
     ctx.fillRect(0, 0, canvas!.width, canvas!.height);
+
+    if (showCameraWater && video) {
+      const vw = video.videoWidth;
+      const vh = video.videoHeight;
+      const scale = Math.max(canvas!.width / vw, canvas!.height / vh);
+      const dw = vw * scale;
+      const dh = vh * scale;
+      const dx = (canvas!.width - dw) / 2;
+      const dy = (canvas!.height - dh) / 2;
+
+      ctx.save();
+      ctx.translate(canvas!.width, 0);
+      ctx.scale(-1, 1);
+      ctx.globalAlpha = 0.45;
+      ctx.drawImage(video, dx, dy, dw, dh);
+      ctx.restore();
+      ctx.globalAlpha = 1;
+    }
+
+    ctx.globalCompositeOperation = showCameraWater ? 'screen' : 'source-over';
     engine.render(ctx);
+    ctx.globalCompositeOperation = 'source-over';
   }
 
   $effect(() => {

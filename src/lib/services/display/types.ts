@@ -2,7 +2,7 @@
  * src/lib/services/display/types.ts
  * Purpose: Canonical display-service runtime type owner for the display particle/camera runtime.
  */
-import type { ColorfieldSocket } from '$lib/shared/socket-client';
+import type { Socket } from '$lib/shared/socket-client';
 
 export type RuntimePoint = { x: number; y: number };
 
@@ -92,7 +92,7 @@ export type RuntimeRuntimeState = {
 	mbtiParticles: Record<string, RuntimeParticle[]>;
 	faceMesh: RuntimeDetector | null;
 	hands: RuntimeDetector | null;
-	socket: ColorfieldSocket | null;
+	socket: Socket | null;
 	drawMode: RuntimeDrawMode;
 	socketBound: boolean;
 };

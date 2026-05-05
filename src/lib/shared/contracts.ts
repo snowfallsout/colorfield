@@ -70,7 +70,7 @@ export type SessionResetPayload = {
   counts?: SessionCounts;
 };
 
-export interface ColorfieldServerToClientEvents {
+export interface ServerToClientEvents {
   'mbti:init': (payload: MbtiInitPayload) => void;
   state: (payload: DisplayStatePayload) => void;
   spawn_particles: (payload: SpawnParticlesPayload) => void;
@@ -78,6 +78,6 @@ export interface ColorfieldServerToClientEvents {
   lucky_color: (payload: LuckyColorPayload) => void;
 }
 
-export interface ColorfieldClientToServerEvents {
+export interface ClientToServerEvents {
   submit_mbti: (payload: SubmitMbtiPayload) => void;
 }

@@ -215,17 +215,25 @@ async function ensureModels(opts: Required<Omit<MediapipeOptions, 'faceDetectorM
   if (!_faceMesh) setupFaceMesh(opts);
   if (!_hands) setupHands(opts);
 
-  try {
-    if (_faceMesh?.initialize) await _faceMesh.initialize();
-  } catch (e) {
-    console.warn('FaceMesh initialize warning:', e);
-  }
+  await Promise.allSettled([
+    _faceMesh?.initialize?.().catch((e) => {
+      console.warn('FaceMesh initialize warning:', e);
+    }),
+    _hands?.initialize?.().catch((e) => {
+      console.warn('Hands initialize warning:', e);
+    })
+  ]);
+}
 
-  try {
-    if (_hands?.initialize) await _hands.initialize();
-  } catch (e) {
-    console.warn('Hands initialize warning:', e);
-  }
+export async function preload(options?: MediapipeOptions) {
+  if (!browser) return;
+
+  _baseOpts = { ..._baseOpts, ...(options || {}) };
+  await ensureScriptsLoaded();
+
+  const merged = mergedOptions(options);
+  if (!_faceMesh) setupFaceMesh(merged);
+  if (!_hands) setupHands(merged);
 }
 
 async function ensureVideoReady(videoEl: HTMLVideoElement) {
@@ -309,7 +317,7 @@ export async function start(
   _onCrowdUpdate = onCrowdUpdate;
   _onInteractionsUpdate = onInteractionsUpdate;
 
-  await init(opts);
+  await preload(opts);
   const merged = mergedOptions(opts);
 
   _videoEl = videoEl;

@@ -1,20 +1,20 @@
 /*
  * src/lib/shared/socket-client.ts
- * Purpose: Provide a typed Socket.IO client factory bound to the shared Colorfield event contracts.
+ * Purpose: Provide a typed Socket.IO client factory bound to the shared socket event contracts.
  */
 import { browser } from '$app/environment';
-import { io, type Socket } from 'socket.io-client';
-import type { ColorfieldClientToServerEvents, ColorfieldServerToClientEvents } from '$lib/shared/contracts';
+import { io, type Socket as IOSocket } from 'socket.io-client';
+import type { ClientToServerEvents, ServerToClientEvents } from '$lib/shared/contracts';
 
-export type ColorfieldSocket = Socket<ColorfieldServerToClientEvents, ColorfieldClientToServerEvents>;
+export type Socket = IOSocket<ServerToClientEvents, ClientToServerEvents>;
 
 type BrowserWindowWithIO = Window & {
-  io?: (url?: string) => ColorfieldSocket;
+  io?: (url?: string) => Socket;
 };
 
-export function createColorfieldSocket(url?: string): ColorfieldSocket {
+export function createSocket(url?: string): Socket {
   if (!browser) {
-    throw new Error('createColorfieldSocket() must run in the browser');
+    throw new Error('createSocket() must run in the browser');
   }
 
   const globalIo = (window as BrowserWindowWithIO).io;

@@ -1,125 +1,114 @@
 <script lang="ts">
 /**
- * `MBTIMobilePage.svelte`
- * Page-level composition for the mobile MBTI flow.
- *
- * Responsibilities (stubbed):
- * - Import and compose mobile components (MBTICard, DimRow, SubmitButton, HoloCardPreview).
- * - Hold page-level state (`sel`) and wire socket events via service adapter.
- *
- * This file contains type stubs and import placeholders only — no runtime
- * logic is implemented here yet.
- */
-
-/**
  * MBTIMobilePage.svelte — Mobile MBTI flow page
  *
  * File-level:
- * Page composition for the mobile flow. Orchestrates state between
- * presentational components, wires socket events and triggers
- * holo image generation. Keep page-level behavior here; move heavy
- * logic into `src/lib/utils` or `src/lib/services`.
+ * Page composition for the mobile flow. The page coordinates the mobile
+ * state object, socket events, and result-image generation while the child
+ * components stay presentational.
  */
+import { onMount } from 'svelte';
 import MBTICard from '$lib/components/mobile/MBTICard.svelte';
 import DimRow from '$lib/components/mobile/DimRow.svelte';
 import SubmitButton from '$lib/components/mobile/SubmitButton.svelte';
 import HoloCardPreview from '$lib/components/mobile/HoloCardPreview.svelte';
-import { connect, emit, on as socketOn } from '$lib/services/socket';
+import {
+  MOBILE_DIMENSIONS,
+  getSelectionMbti,
+  isSelectionComplete,
+  resolveLuckyNickname,
+  setSelectionValue,
+  type MobileDimensionSelection
+} from '$lib/services/mobile/mobile.logic';
+import { generateMobileHoloCardImage } from '$lib/services/mobile/mobile.holo';
+import {
+  mobileFlow,
+  resetMobileFlow,
+  setMobileImageUrl,
+  setMobileLoading,
+  setMobileScreen
+} from '$lib/state/mobile.state.svelte';
+import { connect, disconnect, emit, on as socketOn } from '$lib/services/socket';
 import type { LuckyColorPayload } from '$lib/shared/contracts';
-import { MBTI_NAMES } from '$lib/utils/mbti';
-import { onMount } from 'svelte';
 
-type MobileScreen = 'welcome' | 'mbti' | 'result';
-type DimRowSelection = {
-  dimension: number;
-  value: string;
-};
-type HoloCardPreviewHandle = {
-  generate: (opts?: { mbti?: string; color?: string; nickname?: string; phrase?: string }) => Promise<string | null>;
-};
+const isComplete = $derived(isSelectionComplete(mobileFlow.selection));
+const currentMbti = $derived(getSelectionMbti(mobileFlow.selection));
+const resultHint = $derived(mobileFlow.imageUrl ? '长按图片保存' : '生成中…');
 
-let sel = $state<Array<string | null>>([null, null, null, null]);
-let loading = $state(false);
-let previewRef = $state<HoloCardPreviewHandle | null>(null);
-let screen = $state<MobileScreen>('welcome');
-
-/**
- * onMount: initialize socket connection and listen for server replies.
- * When the server emits `lucky_color` the page transitions to the
- * result screen and instructs the preview to generate the image.
- */
-onMount(() => {
-  connect();
-  socketOn('lucky_color', ({ mbti, color, nickname, luckyPhrase }: LuckyColorPayload) => {
-    screen = 'result';
-    if (previewRef && typeof previewRef.generate === 'function') {
-      void previewRef.generate({
-        mbti,
-        color,
-        nickname: nickname || MBTI_NAMES[mbti] || '',
-        phrase: luckyPhrase ?? undefined
-      });
-    }
-    loading = false;
-  });
-});
-
-/**
- * handleSelect(payload)
- * Receive selection callbacks from child components and update the
- * local `sel` state array.
- */
-function handleSelect(payload: DimRowSelection) {
-  const { dimension, value } = payload;
-  sel[dimension] = value;
+function handleSelect(payload: MobileDimensionSelection): void {
+  setSelectionValue(mobileFlow.selection, payload.dimension, payload.value);
 }
 
-function isComplete() { return sel.every(Boolean); }
+function handleLuckyColor({ mbti, color, nickname, luckyPhrase }: LuckyColorPayload): void {
+  setMobileImageUrl(
+    generateMobileHoloCardImage({
+      mbti,
+      color,
+      nickname: resolveLuckyNickname(nickname, mbti),
+      phrase: luckyPhrase ?? undefined
+    })
+  );
+  setMobileScreen('result');
+  setMobileLoading(false);
+}
 
 /**
  * submitMBTI()
- * Validate selection, set loading state, and emit `submit_mbti` to
- * the server. Uses a short vibration + timeout for UX polish.
+ * Validate the current selection, show loading feedback, and emit the
+ * submit payload to the socket server.
  */
-function submitMBTI() {
-  if (!isComplete()) return;
-  loading = true;
-  const mbti = sel.join('');
+function submitMBTI(): void {
+  if (!isComplete) return;
+  const mbti = currentMbti;
+  setMobileLoading(true);
   if (navigator.vibrate) navigator.vibrate(50);
   setTimeout(() => emit('submit_mbti', { mbti }), 350);
 }
+
+onMount(() => {
+  resetMobileFlow();
+  void connect();
+  socketOn('lucky_color', handleLuckyColor);
+
+  return () => {
+    disconnect();
+  };
+});
 </script>
 
-<!-- Visual skeleton copied from static/mobile.html (styles below) -->
 <div class="noise-overlay"></div>
 
-{#if screen === 'welcome'}
+{#if mobileFlow.screen === 'welcome'}
   <div class="screen">
-    <div class="title">Colorfield</div>
+    <div class="title">InkLumina</div>
     <div class="subtitle">MBTI · Particle Art · Live</div>
     <div class="desc">你的 MBTI 将化作一簇专属色彩的粒子<br>汇入现场大屏的流体画布</div>
-    <button class="btn accent" onclick={() => screen = 'mbti'}>开始加入 →</button>
+    <button class="btn accent" type="button" onclick={() => setMobileScreen('mbti')}>开始加入 →</button>
   </div>
-{:else if screen === 'mbti'}
+{:else if mobileFlow.screen === 'mbti'}
   <div class="screen">
     <div class="h-title">Inside Out the Color</div>
     <div class="h-sub">选择你的 MBTI</div>
 
-    <MBTICard {sel} />
+    <MBTICard selection={mobileFlow.selection} />
 
-    <DimRow dimension={0} values={[{value:'E',hint:'Extrovert'},{value:'I',hint:'Introvert'}]} selected={sel[0]} onselect={handleSelect} />
-    <DimRow dimension={1} values={[{value:'N',hint:'Intuitive'},{value:'S',hint:'Sensing'}]} selected={sel[1]} onselect={handleSelect} />
-    <DimRow dimension={2} values={[{value:'T',hint:'Thinking'},{value:'F',hint:'Feeling'}]} selected={sel[2]} onselect={handleSelect} />
-    <DimRow dimension={3} values={[{value:'J',hint:'Judging'},{value:'P',hint:'Perceiving'}]} selected={sel[3]} onselect={handleSelect} />
+    {#each MOBILE_DIMENSIONS as row (row.dimension)}
+      <DimRow
+        dimension={row.dimension}
+        values={row.values}
+        selected={mobileFlow.selection[row.dimension]}
+        onselect={handleSelect}
+      />
+    {/each}
 
     <div class="submit-row">
-      <SubmitButton disabled={!isComplete()} loading={loading} onsubmit={submitMBTI} />
+      <SubmitButton disabled={!isComplete} loading={mobileFlow.loading} onsubmit={submitMBTI} />
     </div>
   </div>
 {:else}
   <div class="screen" style="padding:0;justify-content:center;align-items:center;flex-direction:column">
-    <HoloCardPreview bind:this={previewRef} />
-    <p style="color:rgba(26,26,34,.55);font-size:12px;letter-spacing:2px;margin-top:14px">长按图片保存</p>
+    <HoloCardPreview imageUrl={mobileFlow.imageUrl} />
+    <p style="color:rgba(26,26,34,.55);font-size:12px;letter-spacing:2px;margin-top:14px">{resultHint}</p>
   </div>
 {/if}
 

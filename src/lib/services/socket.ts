@@ -4,28 +4,28 @@ import { MBTI_PALETTES } from '$lib/shared/constants/mbti';
 import { setSessionName } from '$lib/state/session.svelte';
 import { pushSpawn } from '$lib/state/particles.svelte';
 import { setWaitingVisible, showToast } from '$lib/state/ui.svelte';
-import { createColorfieldSocket, type ColorfieldSocket } from '$lib/shared/socket-client';
+import { createSocket, type Socket } from '$lib/shared/socket-client';
 import type {
-  ColorfieldClientToServerEvents,
-  ColorfieldServerToClientEvents,
+  ClientToServerEvents,
+  ServerToClientEvents,
   DisplayStatePayload,
   SessionResetPayload,
   SpawnParticlesPayload
 } from '$lib/shared/contracts';
 
-let socket: ColorfieldSocket | null = null;
+let socket: Socket | null = null;
 
 function totalFromCounts(counts: Record<string, number> | null | undefined) {
   return Object.values(counts || {}).reduce((sum, value) => sum + Number(value || 0), 0);
 }
 
-function safeEmit<EventName extends keyof ColorfieldClientToServerEvents>(
+function safeEmit<EventName extends keyof ClientToServerEvents>(
   event: EventName,
-  payload: Parameters<ColorfieldClientToServerEvents[EventName]>[0]
+  payload: Parameters<ClientToServerEvents[EventName]>[0]
 ) {
   if (!socket) return;
   try {
-    (socket.emit as (eventName: EventName, eventPayload: Parameters<ColorfieldClientToServerEvents[EventName]>[0]) => void)(event, payload);
+    (socket.emit as (eventName: EventName, eventPayload: Parameters<ClientToServerEvents[EventName]>[0]) => void)(event, payload);
   } catch (e) { /* ignore */ }
 }
 
@@ -38,7 +38,7 @@ export async function connect(opts?: { url?: string }) {
   const url = opts?.url ?? undefined;
 
   try {
-    socket = createColorfieldSocket(url);
+    socket = createSocket(url);
   } catch (e) {
     console.warn('socket.io client not available:', e);
     showToast('Socket unavailable', '#ff4444');
@@ -82,9 +82,9 @@ export async function connect(opts?: { url?: string }) {
   });
 }
 
-export function emit<EventName extends keyof ColorfieldClientToServerEvents>(
+export function emit<EventName extends keyof ClientToServerEvents>(
   event: EventName,
-  payload: Parameters<ColorfieldClientToServerEvents[EventName]>[0]
+  payload: Parameters<ClientToServerEvents[EventName]>[0]
 ) {
   safeEmit(event, payload);
 }
@@ -94,12 +94,12 @@ export function disconnect() {
 }
 
 // Allow consumers to register custom event handlers
-export function on<EventName extends keyof ColorfieldServerToClientEvents>(
+export function on<EventName extends keyof ServerToClientEvents>(
   event: EventName,
-  cb: ColorfieldServerToClientEvents[EventName]
+  cb: ServerToClientEvents[EventName]
 ) {
   if (!socket) return;
   try {
-    (socket.on as (eventName: EventName, listener: ColorfieldServerToClientEvents[EventName]) => void)(event, cb);
+    (socket.on as (eventName: EventName, listener: ServerToClientEvents[EventName]) => void)(event, cb);
   } catch (e) { /* ignore */ }
 }

@@ -10,7 +10,31 @@ import type {
 	SessionsOverviewResponse
 } from '$lib/shared/contracts';
 import { displayState } from '$lib/state/display.svelte';
-import { buildJoinUrl, sanitizeHost, STORAGE_KEY } from '$lib/utils/session';
+import { buildJoinUrl, sanitizeHost, SESSION_HOST_STORAGE_KEY } from '$lib/utils/session';
+
+type QRCodeOptions = {
+	text: string;
+	width: number;
+	height: number;
+	colorDark: string;
+	colorLight: string;
+	correctLevel: number;
+};
+
+type QRCodeConstructor = {
+	new (element: HTMLElement, options: QRCodeOptions): unknown;
+	CorrectLevel: {
+		M: number;
+	};
+};
+
+declare global {
+	interface Window {
+		QRCode?: QRCodeConstructor;
+	}
+}
+
+let qrCodeLoader: Promise<QRCodeConstructor> | null = null;
 
 function escapeHtml(value: string): string {
 	return String(value)
@@ -26,13 +50,96 @@ function setLegacySessionName(name: string): void {
 	element.textContent = name ? `— ${name} —` : '';
 }
 
-function buildQrImageSrc(url: string, size: number): string {
-	return `https://chart.googleapis.com/chart?cht=qr&chs=${size}x${size}&chl=${encodeURIComponent(url)}`;
+async function buildQrDataUrl(url: string, size: number): Promise<string> {
+	if (typeof window === 'undefined') {
+		throw new Error('QR code generation requires a browser environment');
+	}
+
+	const QRCode = await ensureQrCodeLibrary();
+	const mount = document.createElement('div');
+	mount.style.position = 'fixed';
+	mount.style.left = '-9999px';
+	mount.style.top = '-9999px';
+	mount.style.pointerEvents = 'none';
+	document.body.appendChild(mount);
+
+	try {
+		new QRCode(mount, {
+			text: url,
+			width: size,
+			height: size,
+			colorDark: '#000',
+			colorLight: '#fff',
+			correctLevel: QRCode.CorrectLevel.M
+		});
+
+		await new Promise<void>((resolve) => {
+			window.requestAnimationFrame(() => resolve());
+		});
+
+		const canvas = mount.querySelector('canvas');
+		if (canvas instanceof HTMLCanvasElement) {
+			return canvas.toDataURL('image/png');
+		}
+
+		const image = mount.querySelector('img');
+		if (image instanceof HTMLImageElement && image.src) {
+			return image.src;
+		}
+
+		throw new Error('QR code render failed');
+	} finally {
+		mount.remove();
+	}
+}
+
+function ensureQrCodeLibrary(): Promise<QRCodeConstructor> {
+	if (typeof window === 'undefined') {
+		return Promise.reject(new Error('QR code generation requires a browser environment'));
+	}
+
+	if (window.QRCode) {
+		return Promise.resolve(window.QRCode);
+	}
+
+	if (qrCodeLoader) {
+		return qrCodeLoader;
+	}
+
+	qrCodeLoader = new Promise<QRCodeConstructor>((resolve, reject) => {
+		const existing = document.querySelector('script[data-join-qr="1"]') as HTMLScriptElement | null;
+
+		const finalize = () => {
+			if (window.QRCode) {
+				resolve(window.QRCode);
+				return;
+			}
+			reject(new Error('QRCode constructor not found on window'));
+		};
+
+		const fail = () => reject(new Error('Failed to load qrcodejs library'));
+
+		if (existing) {
+			existing.addEventListener('load', finalize, { once: true });
+			existing.addEventListener('error', fail, { once: true });
+			return;
+		}
+
+		const script = document.createElement('script');
+		script.src = 'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';
+		script.async = true;
+		script.dataset.joinQr = '1';
+		script.addEventListener('load', finalize, { once: true });
+		script.addEventListener('error', fail, { once: true });
+		document.head.appendChild(script);
+	});
+
+	return qrCodeLoader;
 }
 
 export function restoreSavedIp(): void {
 	if (typeof window === 'undefined') return;
-	const saved = window.localStorage.getItem(STORAGE_KEY) ?? '';
+	const saved = window.localStorage.getItem(SESSION_HOST_STORAGE_KEY) ?? '';
 	if (!saved) return;
 	const input = document.getElementById('sp-ip-input') as HTMLInputElement | null;
 	if (input) input.value = saved;
@@ -54,9 +161,15 @@ export async function regenerateJoinQr(): Promise<void> {
 	}
 
 	const joinUrl = buildJoinUrl(current);
-	const joinQrDataUrl = buildQrImageSrc(joinUrl, 220);
+	let joinQrDataUrl = '';
+	try {
+		joinQrDataUrl = await buildQrDataUrl(joinUrl, 220);
+	} catch (error) {
+		displayState.setSessionPanelError(error instanceof Error ? error.message : 'QR code generation failed');
+		return;
+	}
 
-	window.localStorage.setItem(STORAGE_KEY, current);
+	window.localStorage.setItem(SESSION_HOST_STORAGE_KEY, current);
 	displayState.setSessionPanelError('');
 	displayState.setJoinQr(joinUrl, joinQrDataUrl);
 }
@@ -97,7 +210,7 @@ export async function createDisplaySession(): Promise<void> {
 	displayState.setSessionPanelError('');
 
 	try {
-		const response = await fetch('/api/sessions/new', {
+		const response = await fetch('/api/sessions', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({ name: draftName })
@@ -244,12 +357,19 @@ export async function generateJoinQr(): Promise<void> {
 		return;
 	}
 	const url = buildJoinUrl(raw);
-	window.localStorage.setItem(STORAGE_KEY, raw);
+	window.localStorage.setItem(SESSION_HOST_STORAGE_KEY, raw);
 
 	const wrap = document.getElementById('sp-qr-wrap');
 	const qrBox = document.getElementById('sp-qr');
 	if (!wrap || !qrBox) return;
-	qrBox.innerHTML = `<img alt="Session join QR code" src="${buildQrImageSrc(url, 180)}" />`;
+	let joinQrDataUrl = '';
+	try {
+		joinQrDataUrl = await buildQrDataUrl(url, 180);
+	} catch (error) {
+		window.alert(error instanceof Error ? error.message : 'QR code generation failed');
+		return;
+	}
+	qrBox.innerHTML = `<img alt="Session join QR code" src="${joinQrDataUrl}" />`;
 	const urlElement = document.getElementById('sp-qr-url');
 	if (urlElement) urlElement.textContent = url;
 	wrap.style.display = 'block';
@@ -261,7 +381,7 @@ export async function refreshCornerQr(): Promise<void> {
 	const urlElement = document.getElementById('corner-qr-url');
 	const hint = document.getElementById('corner-qr-hint');
 	if (!box) return;
-	const raw = window.localStorage.getItem(STORAGE_KEY);
+	const raw = window.localStorage.getItem(SESSION_HOST_STORAGE_KEY);
 	if (!raw) {
 		box.innerHTML = '';
 		if (urlElement) urlElement.textContent = '';
@@ -272,6 +392,14 @@ export async function refreshCornerQr(): Promise<void> {
 	const url = buildJoinUrl(raw);
 	box.innerHTML = '';
 	if (hint) hint.style.display = 'none';
-	box.innerHTML = `<img alt="Corner QR code" src="${buildQrImageSrc(url, 120)}" />`;
+	let joinQrDataUrl = '';
+	try {
+		joinQrDataUrl = await buildQrDataUrl(url, 120);
+	} catch (error) {
+		console.warn('Failed to refresh corner QR:', error);
+		if (hint) hint.style.display = '';
+		return;
+	}
+	box.innerHTML = `<img alt="Corner QR code" src="${joinQrDataUrl}" />`;
 	if (urlElement) urlElement.textContent = url;
 }

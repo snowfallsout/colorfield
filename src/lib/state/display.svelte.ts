@@ -76,7 +76,7 @@ const baseLegendRows = createDefaultLegendRows();
 
 const defaultState: DisplayState = {
 	header: {
-		title: 'Colorfield',
+		title: 'InkLumina',
 		subtitle: 'MBTI · Emotion · Particle Art',
 		emotionBadge: '● FACE TRACKING',
 		cameraToggleOff: '◎ 摄像头 OFF',

@@ -1,7 +1,7 @@
 import { Server as IOServer } from 'socket.io';
 import type http from 'http';
-import type { ColorfieldClientToServerEvents, ColorfieldServerToClientEvents } from '$lib/shared/contracts';
-import { registerColorfieldSocketServer } from '$lib/server/socket.shared';
+import type { ClientToServerEvents, ServerToClientEvents } from '$lib/shared/contracts';
+import { registerSocketServer } from '$lib/server/socket.shared';
 
 /**
  * attachSocket(server)
@@ -10,10 +10,10 @@ import { registerColorfieldSocketServer } from '$lib/server/socket.shared';
  *   Socket.IO server to the provided `http.Server`.
  */
 export function attachSocket(server: http.Server) {
-  const io = new IOServer<ColorfieldClientToServerEvents, ColorfieldServerToClientEvents>(server, {
+  const io = new IOServer<ClientToServerEvents, ServerToClientEvents>(server, {
     cors: { origin: '*' }
   });
-  registerColorfieldSocketServer(io);
+  registerSocketServer(io);
 
   return io;
 }

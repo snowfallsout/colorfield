@@ -4,9 +4,8 @@
 -->
 
 <script lang="ts">
-  import { media, initCamera, stopCamera } from '$lib/state/media.svelte';
+  import { media, initCamera, stopCamera, preloadCamera } from '$lib/state/media.svelte';
   import { ui, toggleWaterOverlay } from '$lib/state/ui.svelte';
-  import WaterOverlay from './WaterOverlay.svelte';
   import { onMount, onDestroy } from 'svelte';
   
   // derived UI state: prefer inspecting the actual video element's stream
@@ -35,17 +34,23 @@
     }
   }
 
+  function toggleWaterOverlayWhenReady() {
+    if (!camActive || media.camLoading) return;
+    toggleWaterOverlay();
+  }
+
   // Expose a global toggle for legacy scripts that call `toggleCamera()`
   onMount(() => {
     if (typeof window !== 'undefined') {
       (window as any).toggleCamera = toggleCamera;
-      (window as any).toggleWaterOverlay = toggleWaterOverlay;
+      (window as any).toggleWaterOverlay = toggleWaterOverlayWhenReady;
     }
+    void preloadCamera();
   });
   onDestroy(() => {
     if (typeof window !== 'undefined') {
       if ((window as any).toggleCamera === toggleCamera) delete (window as any).toggleCamera;
-      if ((window as any).toggleWaterOverlay === toggleWaterOverlay) delete (window as any).toggleWaterOverlay;
+      if ((window as any).toggleWaterOverlay === toggleWaterOverlayWhenReady) delete (window as any).toggleWaterOverlay;
     }
   });
 </script>
@@ -68,18 +73,19 @@
     {/if}
   </button>
 
-  <button id="overlay-toggle" type="button" class="btn-toggle overlay-toggle" class:on={ui.waterOverlay} onclick={toggleWaterOverlay}>
-    { ui.waterOverlay ? '水幕 ON' : '水幕 OFF' }
+  <button id="overlay-toggle" type="button" class="btn-toggle overlay-toggle" class:on={ui.waterOverlay} onclick={toggleWaterOverlayWhenReady} disabled={!camActive || media.camLoading} aria-disabled={!camActive || media.camLoading}>
+    { ui.waterOverlay ? '水幕 OFF' : '水幕 ON' }
   </button>
 
   {#if media.camLoading}
-    <div class="camera-loading" role="status" aria-live="polite">
-      <span class="loading-ring" aria-hidden="true"></span>
-      <span class="loading-copy">Camera loading...</span>
+    <div class="camera-loading-mask" role="status" aria-live="polite" aria-busy="true">
+      <div class="camera-loading-panel">
+        <span class="loading-ring" aria-hidden="true"></span>
+        <strong class="loading-title">Camera Loading</strong>
+        <span class="loading-copy">正在啟動鏡頭與偵測模型，請稍候 3-5 秒。</span>
+      </div>
     </div>
   {/if}
-
-  <WaterOverlay />
 </div>
 
 <style>
@@ -110,37 +116,88 @@
   .btn-toggle:hover, .overlay-toggle:hover { background: rgba(255,255,255,0.6); color: rgba(30,40,60,0.85); }
   .btn-toggle.on, .overlay-toggle.on { color: rgba(30,40,60,0.85); border-color: rgba(100,140,255,0.5); }
 
-  .camera-loading {
-    position: absolute;
-    top: 42px;
-    right: 0;
+  .camera-loading-mask {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
     display: flex;
+    justify-content: center;
     align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    border-radius: 999px;
-    background: linear-gradient(135deg, rgba(255,255,255,0.66), rgba(255,255,255,0.35));
-    border: 1px solid rgba(255,255,255,0.65);
-    box-shadow: 0 8px 24px rgba(31,38,135,0.08);
-    color: rgba(30,40,60,0.72);
-    font-size: 10px;
-    letter-spacing: 1.8px;
-    text-transform: uppercase;
+    padding: 24px;
+    background:
+      radial-gradient(circle at top, rgba(255,255,255,0.78), rgba(232,240,255,0.64) 38%, rgba(225,233,248,0.92)),
+      rgba(245,248,255,0.72);
+    backdrop-filter: blur(18px);
+  }
+
+  .camera-loading-panel {
+    min-width: min(420px, calc(100vw - 48px));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 28px 32px;
+    border-radius: 28px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(255,255,255,0.55));
+    border: 1px solid rgba(255,255,255,0.72);
+    box-shadow: 0 24px 70px rgba(31,38,135,0.12);
+    color: rgba(30,40,60,0.82);
+    text-align: center;
     pointer-events: none;
-    white-space: nowrap;
   }
 
   .loading-ring {
-    width: 12px;
-    height: 12px;
+    width: 52px;
+    height: 52px;
     border-radius: 999px;
-    border: 2px solid rgba(100,140,255,0.18);
+    border: 4px solid rgba(100,140,255,0.18);
     border-top-color: rgba(100,140,255,0.85);
     animation: cam-spin 0.9s linear infinite;
   }
 
+  .loading-title {
+    color: rgba(30,40,60,0.88);
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
   .loading-copy {
+    max-width: 26ch;
+    color: rgba(30,40,60,0.6);
+    font-size: 12px;
+    letter-spacing: 2px;
+    line-height: 1.8;
+    text-transform: uppercase;
     animation: cam-breathe 1.6s ease-in-out infinite;
+  }
+
+  @media (max-width: 640px) {
+    .cam-toggle-wrap {
+      right: 14px;
+      gap: 6px;
+    }
+
+    .btn-toggle {
+      padding: 7px 12px;
+      letter-spacing: 1.4px;
+    }
+
+    .camera-loading-panel {
+      padding: 24px 20px;
+      border-radius: 22px;
+    }
+
+    .loading-title {
+      font-size: 14px;
+      letter-spacing: 2px;
+    }
+
+    .loading-copy {
+      font-size: 11px;
+      letter-spacing: 1.4px;
+    }
   }
 
   @keyframes cam-spin {

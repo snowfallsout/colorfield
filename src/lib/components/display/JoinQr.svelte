@@ -3,30 +3,21 @@
   Doc: JoinQr widget for the display footer.
   - Renders the scan target used by mobile users to join the active display session.
   - Mirrors the legacy corner QR area from `static/display.html`.
-  - Keeps the widget browser-only and dependency-light by using a remote QR image fallback.
+  - Uses the canonical display session store so the footer and session panel share one QR source.
 -->
 
 <script lang="ts">
-  import { session, getJoinUrl } from '$lib/state/session.svelte';
-
-  // Reactive join URL shown below the code and embedded into the QR image source.
-  const joinUrl = $derived.by(() => getJoinUrl(session.sessionName ?? undefined));
-
-  // Use a remote QR image as the simplest renderable fallback.
-  const joinQrSrc = $derived.by(() => {
-    if (!joinUrl) return '';
-    return `https://chart.googleapis.com/chart?cht=qr&chs=150x150&chl=${encodeURIComponent(joinUrl)}`;
-  });
+  import { displayState } from '$lib/state/display.svelte';
 </script>
 
 <div class="joinqr-box">
-  {#if joinQrSrc}
-    <img class="joinqr" alt="Join QR code" src={joinQrSrc} />
+  {#if $displayState.sessionPanel.joinQrDataUrl}
+    <img class="joinqr" alt="Join QR code" src={$displayState.sessionPanel.joinQrDataUrl} />
   {:else}
     <div class="joinqr placeholder" aria-hidden="true"></div>
   {/if}
-  <div class="joinqr-url">{joinUrl}</div>
-  <div class="joinqr-hint">在活动管理中<br>设置局域网 IP</div>
+  <div class="joinqr-url">{$displayState.sessionPanel.joinUrl}</div>
+  <div class="joinqr-hint">{$displayState.footer.qrHintLines[0]}<br>{$displayState.footer.qrHintLines[1]}</div>
 </div>
 
 <style>
@@ -50,6 +41,11 @@
 
   .joinqr.placeholder {
     box-sizing: border-box;
+    width: 120px;
+    height: 120px;
+    border-radius: 6px;
+    border: 1px dashed rgba(200, 210, 230, 0.7);
+    background: rgba(255, 255, 255, 0.55);
   }
 
   .joinqr-url {

@@ -8,7 +8,7 @@ import type {
 	SessionResetPayload,
 	SpawnParticlesPayload
 } from '$lib/shared/contracts';
-import { createColorfieldSocket, type ColorfieldSocket } from '$lib/shared/socket-client';
+import { createSocket, type Socket } from '$lib/shared/socket-client';
 import { displayState } from '$lib/state/display.svelte';
 import {
 	registerDisplayLegacyBridge,
@@ -22,7 +22,7 @@ import { spawnMBTI, state } from '$lib/services/display/core';
 // Bind the shared display socket once and fan payloads into state/runtime owners.
 export function bindRealtimeSocket(): void {
 	if (!state.socket) {
-		state.socket = createColorfieldSocket();
+		state.socket = createSocket();
 	}
 
 	if (state.socketBound) {
@@ -30,7 +30,7 @@ export function bindRealtimeSocket(): void {
 	}
 
 	state.socketBound = true;
-	const socket = state.socket as ColorfieldSocket;
+	const socket = state.socket as Socket;
 	socket.on('state', (payload: DisplayStatePayload) => {
 		displayState.applySocketState(payload);
 		if (payload.session) {

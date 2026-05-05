@@ -1,13 +1,13 @@
 import { Server as IOServer } from 'socket.io';
 import type { Plugin } from 'vite';
 import type {
-  ColorfieldClientToServerEvents,
-  ColorfieldServerToClientEvents
+  ClientToServerEvents,
+  ServerToClientEvents
 } from '../shared/contracts';
-import { registerColorfieldSocketServer } from './socket.shared';
+import { registerSocketServer } from './socket.shared';
 
 export default function socketIOPlugin(): Plugin {
-  let io: IOServer<ColorfieldClientToServerEvents, ColorfieldServerToClientEvents> | null = null;
+  let io: IOServer<ClientToServerEvents, ServerToClientEvents> | null = null;
 
   return {
     name: 'vite-plugin-socket-io',
@@ -16,10 +16,10 @@ export default function socketIOPlugin(): Plugin {
       if (!httpServer) return;
 
       // Attach Socket.IO to Vite's HTTP server in dev only
-      io = new IOServer<ColorfieldClientToServerEvents, ColorfieldServerToClientEvents>(httpServer, {
+      io = new IOServer<ClientToServerEvents, ServerToClientEvents>(httpServer, {
         cors: { origin: '*' }
       });
-      registerColorfieldSocketServer(io);
+      registerSocketServer(io);
 
       // Close socket when Vite stops
       httpServer.on('close', () => {

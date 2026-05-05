@@ -2,7 +2,7 @@
 </script>
 
 <div class="display-header">
-	<h1>Colorfield</h1>
+	<h1>InkLumina</h1>
 	<p>MBTI · Emotion · Particle Art</p>
 </div>
 

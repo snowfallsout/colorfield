@@ -27,7 +27,7 @@ const {
 function handleClick() { ontoggle?.({ value }); }
 </script>
 
-<button class="dim-btn" class:sel={selected} onclick={handleClick} aria-pressed={selected}>
+<button class="dim-btn" class:sel={selected} type="button" onclick={handleClick} aria-pressed={selected}>
   <span class="big">{value}</span>
   <span class="hint">{hint}</span>
 </button>

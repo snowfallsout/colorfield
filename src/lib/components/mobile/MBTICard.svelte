@@ -3,15 +3,30 @@
  * MBTICard.svelte — Presentational MBTI gradient card
  *
  * File-level:
- * Renders a four-letter MBTI preview with a color gradient derived
- * from the current selection. This component is presentational only
- * and does not own selection changes.
+ * Renders a four-letter MBTI preview with a color gradient derived from the
+ * current selection. The component stays presentational and only receives the
+ * selection from the page.
  */
-import { deriveCardColors, MBTI_NAMES } from '$lib/utils/mbti';
-const { sel = [null, null, null, null] as Array<string | null> } = $props();
+import {
+  createEmptySelection,
+  deriveMobileCardColors,
+  getSelectionCopy,
+  getSelectionPreview,
+  type MobileSelection
+} from '$lib/services/mobile/mobile.logic';
+
+interface Props {
+  selection?: MobileSelection;
+}
+
+const { selection = createEmptySelection() }: Props = $props();
+
+const cardColors = $derived(deriveMobileCardColors(selection));
+const previewLetters = $derived(getSelectionPreview(selection));
+const cardCopy = $derived(getSelectionCopy(selection));
 </script>
 
-<div class="mbti-card" style="--cc0:{deriveCardColors(sel).c0};--cc1:{deriveCardColors(sel).c1};--cc2:{deriveCardColors(sel).c2};--cc3:{deriveCardColors(sel).c3};">
+<div class="mbti-card" style="--cc0:{cardColors.c0};--cc1:{cardColors.c1};--cc2:{cardColors.c2};--cc3:{cardColors.c3};">
   <div class="card-inner">
     <div class="card-top">
       <div class="card-kicker">
@@ -23,9 +38,9 @@ const { sel = [null, null, null, null] as Array<string | null> } = $props();
 
     <div class="card-letters">
       <div class="preview">
-        {#each [0,1,2,3] as i (i)}
-          <div class="preview-letter {sel[i] ? '' : 'placeholder'}" id={`pl-${i}`}>
-            {sel[i] || ['M','B','T','I'][i]}
+        {#each previewLetters as letter, index (index)}
+          <div class="preview-letter" class:placeholder={letter.isPlaceholder}>
+            {letter.value}
           </div>
         {/each}
       </div>
@@ -33,10 +48,10 @@ const { sel = [null, null, null, null] as Array<string | null> } = $props();
 
     <div class="card-bottom">
       <div>
-        <div class="card-name-cn">{sel.every(Boolean) ? MBTI_NAMES[sel.join('')] || '—' : (sel.filter(Boolean).join('') || '—')}</div>
-        <div class="card-name-en">{sel.every(Boolean) ? sel.join('') : (sel.filter(Boolean).length ? `${sel.filter(Boolean).length}/4` : 'Select four dimensions')}</div>
+        <div class="card-name-cn">{cardCopy.nameCn}</div>
+        <div class="card-name-en">{cardCopy.nameEn}</div>
       </div>
-      <div class="card-num">{sel.every(Boolean) ? sel.join('') : (sel.filter(Boolean).join('') || '—')}</div>
+      <div class="card-num">{cardCopy.num}</div>
     </div>
   </div>
 </div>

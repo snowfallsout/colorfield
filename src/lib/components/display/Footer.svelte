@@ -7,35 +7,38 @@
 
 <script lang="ts">
 	import JoinQr from './JoinQr.svelte';
-  import { getTotal } from '$lib/state/mbti.svelte';
-  import { session, setPanelOpen } from '$lib/state/session.svelte';
+  import { displayState } from '$lib/state/display.svelte';
+  import { loadSessionOverview } from '$lib/services/display/session';
   import { ui } from '$lib/state/ui.svelte';
 
-	let total = $derived.by(() => getTotal());
+  function openSessionManager(): void {
+    displayState.openSessionPanel();
+    void loadSessionOverview();
+  }
 </script>
 
 <footer class="display-footer">
   <div class="left-col">
     <div class="total-block">
-      <div class="label">Participants</div>
-      <strong class="num">{total}</strong>
+      <div class="label">{$displayState.footer.participantsLabel}</div>
+      <strong class="num">{$displayState.footer.participantCount}</strong>
     </div>
   </div>
 
   <div class="center-col">
     <div class="center-block">
-      <div id="session-name">{session.sessionName || '— 默认活动 —'}</div>
+      <div id="session-name">{$displayState.sessionName || '— InkLumina Session —'}</div>
       {#if ui.waitingVisible}
         <div id="waiting">Waiting for participants to join…</div>
       {/if}
       <div id="interaction-hint">Try smiling &nbsp;·&nbsp; Pinch your fingers and move your hands</div>
     </div>
-    <button id="session-btn" onclick={() => setPanelOpen(true)} title="Open sessions">⊕ 新场次 / 历史</button>
+    <button id="session-btn" onclick={openSessionManager} title="Open sessions">{$displayState.sessionControls.buttonLabel}</button>
   </div>
 
   <div class="right-col">
     <div class="join-block">
-      <b>SCAN TO JOIN</b>
+      <b>{$displayState.footer.scanToJoinLabel}</b>
       <div class="corner-qr-box">
         <JoinQr />
       </div>

@@ -25,7 +25,7 @@ const {
 function handleClick() { if (!disabled && !loading) onsubmit?.(); }
 </script>
 
-<button class="btn accent" id="submit-btn" onclick={handleClick} disabled={disabled}>
+<button class="btn accent" id="submit-btn" type="button" onclick={handleClick} disabled={disabled || loading} aria-busy={loading}>
   {#if loading}色彩解析中…{:else}加入画布{/if}
 </button>
 

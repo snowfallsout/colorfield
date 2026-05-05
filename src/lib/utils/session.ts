@@ -3,7 +3,7 @@
  * Purpose: Pure client-safe session helper utilities shared by display session services.
  */
 
-export const STORAGE_KEY = 'colorfield_pc_ip';
+export const SESSION_HOST_STORAGE_KEY = 'display_pc_ip';
 
 export function sanitizeHost(raw: string): string {
 	return raw.trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
