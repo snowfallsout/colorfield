@@ -1,8 +1,13 @@
-// Minimal MediaPipe runtime service for display route.
+// Shared browser-side MediaPipe client service.
 // Responsibilities:
 // - Lazy-load FaceMesh + Hands scripts in browser.
 // - Manage one camera stream and one RAF processing loop.
 // - Emit normalized crowd/interactions arrays to callers.
+// - Serve `state/media.svelte.ts` and similar generic client-side flows.
+//
+// This file is intentionally distinct from `services/display/camera.ts`:
+// - `services/mediapipe.ts` is a reusable browser inference service.
+// - `services/display/camera.ts` is the display-route-specific camera owner.
 
 import { browser } from '$app/environment';
 import type { CrowdMember, InteractionPoint } from '$lib/state/media.svelte';

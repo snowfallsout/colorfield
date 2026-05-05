@@ -15,15 +15,14 @@
   import ParticleEngine from '$lib/services/display/particleEngine';
   import { popSpawn } from '$lib/state/particles.svelte';
   import { media } from '$lib/state/media.svelte';
+  import { ui } from '$lib/state/ui.svelte';
   import { connect as socketConnect } from '$lib/services/socket';
-  import { mountCoordinator } from '$lib/utils/coordinator';
 
   let canvas = $state<HTMLCanvasElement | null>(null);
   let ctx = $state<CanvasRenderingContext2D | null>(null);
   let engine = $state<ParticleEngine | null>(null);
   let rafId = 0;
   let last = 0;
-  let videoEl = $state<HTMLVideoElement | null>(null);
 
   // perFrameSpawnCap: maximum number of spawn events to pull per frame
   let perFrameSpawnCap = 1; // configurable
@@ -52,7 +51,7 @@
     if (!canvas) return { x: 0, y: 0 };
     const W = canvas.width, H = canvas.height;
     // Prefer a live video element for correct scale/crop mapping when available
-    const v = videoEl || (document.getElementById('video-bg') as HTMLVideoElement | null);
+    const v = media.videoEl || (document.getElementById('video-bg') as HTMLVideoElement | null);
     if (!v || v.videoWidth === 0) {
       return { x: (1 - normX) * W, y: normY * H };
     }
@@ -96,7 +95,7 @@
     engine.step(dt);
 
     // clear and render
-    ctx.fillStyle = 'rgba(245,248,255,1)';
+    ctx.fillStyle = ui.waterOverlay ? 'rgba(245,248,255,0.14)' : 'rgba(245,248,255,1)';
     ctx.fillRect(0, 0, canvas!.width, canvas!.height);
     engine.render(ctx);
   }
@@ -136,12 +135,8 @@
     try { (window as any).__particleEngine = engine; } catch (e) { /* ignore */ }
     console.debug('ParticleEngine seeded, count=', engine.particles.length);
 
-    // initialize last timestamp and capture video element for mapping
+    // initialize last timestamp
     last = performance.now();
-    videoEl = document.getElementById('video-bg') as HTMLVideoElement | null;
-    // register video element and start coordinator (camera, socket, UI wiring)
-    let coordCleanup: (() => void) | null = null;
-    try { coordCleanup = mountCoordinator(videoEl); } catch (e) { /* ignore in SSR or missing APIs */ }
 
     // subscribe runes for interaction mapping
     window.addEventListener('resize', resize);
@@ -163,8 +158,6 @@
       cancelAnimationFrame(rafId);
       window.removeEventListener('resize', resize);
       clearInterval(dbg);
-      // stop coordinator if started
-      try { if (coordCleanup) coordCleanup(); } catch (e) {}
     });
   });
 </script>

@@ -30,6 +30,7 @@ export type InteractionPoint = {
 export const media = $state({
   videoEl: null as HTMLVideoElement | null,
   camOn: false,
+  camLoading: false,
   crowd: [] as CrowdMember[],
   activeInteractions: [] as InteractionPoint[],
   emotion: 'neutral' as 'neutral' | 'smile'
@@ -78,6 +79,8 @@ export async function initCamera(): Promise<void> {
   if (_starting || _started) return;
 
   _starting = true;
+  media.camLoading = true;
+  media.camOn = false;
   setHandBadge('✋ HAND TRACKING INIT');
 
   try {
@@ -116,6 +119,7 @@ export async function initCamera(): Promise<void> {
 
     media.camOn = true;
     _started = true;
+    setHandBadge('✋ NO HAND');
   } catch (e) {
     console.warn('initCamera failed:', e);
     media.camOn = false;
@@ -123,6 +127,7 @@ export async function initCamera(): Promise<void> {
     setHandBadge('✋ NO HAND');
     throw e;
   } finally {
+    media.camLoading = false;
     _starting = false;
   }
 }
@@ -131,6 +136,7 @@ export async function initCamera(): Promise<void> {
 export function stopCamera(): void {
   if (!browser) return;
 
+  media.camLoading = false;
   mediapipeStop();
   const el = media.videoEl;
   const stream = el?.srcObject;

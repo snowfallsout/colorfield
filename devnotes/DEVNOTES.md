@@ -6,7 +6,7 @@ under `devnotes/DEVNOTES_{timestamp}.md` and reference it here.
 
 # DEVNOTES — Current
 
-Last snapshot: [DEVNOTES_2026-05-02T214000Z.md](DEVNOTES_2026-05-02T214000Z.md)
+Last snapshot: [DEVNOTES_2026-05-05T003000Z.md](DEVNOTES_2026-05-05T003000Z.md)
 
 Policy (short):
 
@@ -42,6 +42,10 @@ Recent activity (delta):
 - 2026-05-02: Added [DEVNOTES_2026-05-02T212000Z.md](DEVNOTES_2026-05-02T212000Z.md) recording the rename/move of the remaining runtime kernel from `function/runtime` into `services/display/kernel`, along with the final retirement of `function/` as an active code path.
 - 2026-05-02: Added [DEVNOTES_2026-05-02T213000Z.md](DEVNOTES_2026-05-02T213000Z.md) recording the flattening of `services/display/kernel/*` back into `services/display/*` to avoid an unnecessary extra subdirectory layer.
 - 2026-05-02: Added [DEVNOTES_2026-05-02T214000Z.md](DEVNOTES_2026-05-02T214000Z.md) recording the flattening of single-consumer display helpers, the removal of `services/core/*`, and the deletion of the unused `services/api.ts` shell.
+- 2026-05-02: Added [DEVNOTES_2026-05-02T215000Z.md](DEVNOTES_2026-05-02T215000Z.md) recording the aggregation of dev/prod server-side socket wiring into `server/socket.shared.ts`, plus the clarified role note for the top-level `services/mediapipe.ts` client service.
+- 2026-05-02: Added [DEVNOTES_2026-05-02T220000Z.md](DEVNOTES_2026-05-02T220000Z.md) recording the shared-constant deduplication for display/mobile utilities, including legend-row generation from shared MBTI data and the removal of duplicate smile/MBTI constant definitions from `utils/*`.
+- 2026-05-05: Added [DEVNOTES_2026-05-05T000500Z.md](DEVNOTES_2026-05-05T000500Z.md) recording the Vite dev-server fix: the config-time socket plugin path now uses relative imports instead of `$lib/*` aliases.
+- 2026-05-05: Added [DEVNOTES_2026-05-05T003000Z.md](DEVNOTES_2026-05-05T003000Z.md) recording the display camera/water toggle repair: remove the legacy auto-start camera owner from Canvas, add camera loading UI, and make the water toggle control canvas background fill independently from camera state.
 
 Next planned actions:
 
@@ -66,6 +70,8 @@ Next planned actions:
 - Continue clarifying whether `services/display/kernel/*` should stay as a flat kernel layer or be split into smaller render/particle/gesture subdomains.
 - Continue simplifying `services/display/*` so helper files only remain separate when they serve more than one concrete owner.
 - Continue clarifying the role split between top-level client services (`services/socket.ts`, `services/mediapipe.ts`) and route-specific display services under `services/display/*`.
+- Continue consolidating server-side behavior so dev/prod adapters share one owner for socket and session flow where practical.
+- Continue reducing duplicated literal data so `shared/constants/*` stays the sole owner of cross-domain MBTI and vision constants.
 
 <!-- End of current DEVNOTES index -->
 

@@ -2,7 +2,7 @@
  * src/lib/state/display.svelte.ts
  * Purpose: Canonical display state owner for the display overlay and session panel.
  */
-import { derived, writable } from 'svelte/store';
+import { writable } from 'svelte/store';
 import type {
 	DisplayStatePayload,
 	SessionCounts,
@@ -11,6 +11,7 @@ import type {
 	SessionSummary,
 	SpawnParticlesPayload
 } from '$lib/shared/contracts';
+import { MBTI_COLORS, MBTI_ORDER } from '$lib/shared/constants/mbti';
 import type { DisplayLegendRowSample, DisplaySampleData } from '$lib/utils/types';
 
 export type DisplaySessionPanelState = DisplaySampleData['sessionPanel'] & {
@@ -48,24 +49,12 @@ export type DisplayPatch = Partial<{
 }>;
 
 function createDefaultLegendRows(): DisplayLegendRowSample[] {
-	return [
-		{ color: '#4B0082', label: 'INTJ', fillPercent: 0, count: 0 },
-		{ color: '#6495ED', label: 'INTP', fillPercent: 0, count: 0 },
-		{ color: '#FF4500', label: 'ENTJ', fillPercent: 0, count: 0 },
-		{ color: '#FF00FF', label: 'ENTP', fillPercent: 0, count: 0 },
-		{ color: '#00A86B', label: 'INFJ', fillPercent: 0, count: 0 },
-		{ color: '#DA70D6', label: 'INFP', fillPercent: 0, count: 0 },
-		{ color: '#FC913A', label: 'ENFJ', fillPercent: 0, count: 0 },
-		{ color: '#92FE9D', label: 'ENFP', fillPercent: 0, count: 0 },
-		{ color: '#95A5A6', label: 'ISTJ', fillPercent: 0, count: 0 },
-		{ color: '#BDB76B', label: 'ISFJ', fillPercent: 0, count: 0 },
-		{ color: '#4682B4', label: 'ESTJ', fillPercent: 0, count: 0 },
-		{ color: '#FFB6C1', label: 'ESFJ', fillPercent: 0, count: 0 },
-		{ color: '#4A4A4A', label: 'ISTP', fillPercent: 0, count: 0 },
-		{ color: '#00CED1', label: 'ISFP', fillPercent: 0, count: 0 },
-		{ color: '#FF2400', label: 'ESTP', fillPercent: 0, count: 0 },
-		{ color: '#7B68EE', label: 'ESFP', fillPercent: 0, count: 0 }
-	];
+	return MBTI_ORDER.map((label) => ({
+		color: MBTI_COLORS[label],
+		label,
+		fillPercent: 0,
+		count: 0
+	}));
 }
 
 function withLegendCounts(
@@ -338,10 +327,3 @@ export const displayState = {
 		}));
 	}
 };
-
-export const displayLegendRows = derived(displayState, ($state) => $state.legend.rows);
-export const displaySessionPanelOpen = derived(displayState, ($state) => $state.sessionPanel.open);
-export const displayWaitingVisible = derived(
-	displayState,
-	($state) => $state.footer.participantCount === 0
-);

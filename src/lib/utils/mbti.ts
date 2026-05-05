@@ -1,16 +1,15 @@
-export const MBTI_COLORS: Record<string, string> = {
-  INTJ: '#4B0082', INTP: '#6495ED', ENTJ: '#FF4500', ENTP: '#FF00FF',
-  INFJ: '#00A86B', INFP: '#DA70D6', ENFJ: '#FC913A', ENFP: '#92FE9D',
-  ISTJ: '#95A5A6', ISFJ: '#BDB76B', ESTJ: '#4682B4', ESFJ: '#FFB6C1',
-  ISTP: '#4A4A4A', ISFP: '#00CED1', ESTP: '#FF2400', ESFP: '#7B68EE'
-};
+/*
+ * src/lib/utils/mbti.ts
+ * Purpose: Mobile-card color helpers plus compatibility re-exports for canonical MBTI constants.
+ */
+import {
+  MBTI_COLORS as SHARED_MBTI_COLORS,
+  MBTI_NAMES as SHARED_MBTI_NAMES
+} from '$lib/shared/constants/mbti';
 
-export const MBTI_NAMES: Record<string, string> = {
-  INTJ: '战略家', INTP: '逻辑学家', ENTJ: '指挥官', ENTP: '辩论家',
-  INFJ: '提倡者', INFP: '调停者', ENFJ: '主人公', ENFP: '竞选者',
-  ISTJ: '检察官', ISFJ: '守护者', ESTJ: '总经理', ESFJ: '执政官',
-  ISTP: '鉴赏家', ISFP: '探险家', ESTP: '企业家', ESFP: '表演者'
-};
+export const MBTI_COLORS: Record<string, string> = SHARED_MBTI_COLORS;
+
+export const MBTI_NAMES: Record<string, string> = SHARED_MBTI_NAMES;
 
 export const LETTER_COLORS: Record<string, string> = {
   E: '#FF6B4A', I: '#5B5B9F', N: '#9B6BDB', S: '#4AB8A0',
