@@ -3,7 +3,11 @@
  * Purpose: Manage a persistent emoji overlay that follows smiling faces.
  */
 import { media } from '$lib/state/media.svelte';
-import { pickRandomEmoji } from '$lib/utils/faceHash';
+import { SMILE_EMOJIS } from '$lib/shared/constants/vision';
+
+function pickRandomEmoji(): string {
+  return SMILE_EMOJIS[Math.floor(Math.random() * SMILE_EMOJIS.length)];
+}
 
 type Face = any;
 

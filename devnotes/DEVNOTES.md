@@ -6,7 +6,7 @@ under `devnotes/DEVNOTES_{timestamp}.md` and reference it here.
 
 # DEVNOTES — Current
 
-Last snapshot: [DEVNOTES_2026-05-05T171702Z.md](DEVNOTES_2026-05-05T171702Z.md)
+Last snapshot: [DEVNOTES_2026-05-06T163951Z.md](DEVNOTES_2026-05-06T163951Z.md)
 
 Policy (short):
 
@@ -20,6 +20,8 @@ Snapshot created to preserve current state before proceeding with repo-wide chan
 ---
 
 Recent activity (delta):
+
+- 2026-05-06: Added [DEVNOTES_2026-05-06T163951Z.md](DEVNOTES_2026-05-06T163951Z.md) recording the consolidation pass that keeps `state/` limited to `.svelte.ts` files and merges single-consumer display helpers into services.
 
 - 2026-04-24: Created snapshot DEVNOTES_2026-04-24T120000Z.md capturing function-area migration progress and outstanding work.
 - 2026-05-02: Added [DEVNOTES_2026-05-02T120000Z.md](DEVNOTES_2026-05-02T120000Z.md) defining a stricter Svelte 5 migration baseline for `src/`, including A/B/C classification using `static/display.html`, `static/mobile.html`, and `static/server.js` as protected reference sources.
@@ -52,6 +54,8 @@ Recent activity (delta):
 - 2026-05-05: Added [DEVNOTES_2026-05-05T170104Z.md](DEVNOTES_2026-05-05T170104Z.md) recording the repo-wide branding cleanup: active socket contracts and helpers now use `InkLumina`, the session key now uses `inklumina_pc_ip`, and the remaining user-facing source string now reads `inklumina.live`.
 - 2026-05-05: Added [DEVNOTES_2026-05-05T171249Z.md](DEVNOTES_2026-05-05T171249Z.md) recording the mobile helper relocation: the mobile logic/canvas helpers now live under `src/lib/services/mobile/`, the Svelte state owner now lives under `src/lib/state/`, and the page/component imports were updated accordingly.
 - 2026-05-05: Added [DEVNOTES_2026-05-05T171702Z.md](DEVNOTES_2026-05-05T171702Z.md) recording the internal naming cleanup: socket contracts and helpers now use generic names, the session storage key is generic, and the QR script tag no longer carries a brand-prefixed data attribute.
+- 2026-05-06: Added [DEVNOTES_TREE_2026-05-06T141431Z.md](DEVNOTES_TREE_2026-05-06T141431Z.md) defining the `src/lib/utils/` keep / move / retire classification plan.
+- 2026-05-06: Added [DEVNOTES_TREE_2026-05-06T151040Z.md](DEVNOTES_TREE_2026-05-06T151040Z.md) recording the move of the pure session join-url helper into the display service domain.
 
 Next planned actions:
 
@@ -61,8 +65,8 @@ Next planned actions:
 - Continue reducing display runtime reliance on `@ts-nocheck` once the shared contract layer is in place.
 - Continue phase-1 flattening by moving `function/session` public logic into `services` and shrinking `function/` to internal runtime code.
 - Continue phase-1 display-domain migration by moving runtime owner code from `function/runtime/*` into `display/*`, then re-scope `utils/state.ts` into `state/display.svelte.ts`.
-- Continue the service-centric refactor by moving display state ownership out of `utils/state.ts`, and by shrinking `function/runtime/*` behind `services/display/*`.
-- Continue the service-centric refactor by reducing the compatibility surface around `utils/state.ts` and by moving more display runtime consumers onto canonical state/service owners.
+- Continue the service-centric refactor by finishing the shell cleanup around `utils/state.ts`, `utils/session.ts`, `services/displayRuntime.ts`, and `services/displaySession.ts`.
+- Continue the service-centric refactor by moving display-only helper types and smile hashing logic next to `state/*` owners, then re-evaluating the stale `app.d.ts` declaration.
 - Continue pruning legacy `function/*` shells by checking `function/runtime/index.ts` and adjacent runtime barrels for zero-reference deletion candidates.
 - Continue pruning `function/runtime/*` from the outside in, starting with public barrels and type ownership before touching active runtime kernels.
 - Continue shrinking `function/runtime/*` by moving bridge concerns and global legacy helpers behind `services/display/*` without changing runtime behavior.
@@ -78,6 +82,9 @@ Next planned actions:
 - Continue clarifying the role split between top-level client services (`services/socket.ts`, `services/mediapipe.ts`) and route-specific display services under `services/display/*`.
 - Continue consolidating server-side behavior so dev/prod adapters share one owner for socket and session flow where practical.
 - Continue reducing duplicated literal data so `shared/constants/*` stays the sole owner of cross-domain MBTI and vision constants.
+- Classify `src/lib/utils/*` into keep / move / retire buckets before any further cleanup or deletion.
+- Keep the display session helper consolidated into the canonical display service owner when it has only one consumer.
+- Keep `utils/pool.ts` and `utils/sprites.ts` until the display particle engine is rehomed off the legacy utility path.
 - Keep active source branding aligned with `InkLumina` while leaving protected static reference files untouched unless explicitly authorized.
 - Keep mobile helper ownership aligned with `services/mobile` and `state/` so import paths stay consistent after file moves.
 - Keep internal identifiers generic unless the name itself must be user-visible plain text.

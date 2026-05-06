@@ -24,16 +24,4 @@ declare module '$lib/config/settings' {
 	export default settings;
 }
 
-declare module '$lib/utils/faceHash' {
-	export function faceHash(x: number, y: number): string;
-	export const SMILE_EMOJIS: string[];
-	export function pickRandomEmoji(): string;
-	const utils: {
-		faceHash: typeof faceHash;
-		SMILE_EMOJIS: typeof SMILE_EMOJIS;
-		pickRandomEmoji: typeof pickRandomEmoji;
-	};
-	export default utils;
-}
-
 export {};

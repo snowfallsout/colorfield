@@ -12,7 +12,7 @@ import type {
 	SpawnParticlesPayload
 } from '$lib/shared/contracts';
 import { MBTI_COLORS, MBTI_ORDER } from '$lib/shared/constants/mbti';
-import type { DisplayLegendRowSample, DisplaySampleData } from '$lib/utils/types';
+import type { DisplayLegendRowSample, DisplaySampleData } from '$lib/services/display/types';
 
 export type DisplaySessionPanelState = DisplaySampleData['sessionPanel'] & {
 	open: boolean;

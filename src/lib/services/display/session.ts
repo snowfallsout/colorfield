@@ -10,7 +10,21 @@ import type {
 	SessionsOverviewResponse
 } from '$lib/shared/contracts';
 import { displayState } from '$lib/state/display.svelte';
-import { buildJoinUrl, sanitizeHost, SESSION_HOST_STORAGE_KEY } from '$lib/utils/session';
+
+const SESSION_HOST_STORAGE_KEY = 'display_pc_ip';
+
+function sanitizeHost(raw: string): string {
+	return raw.trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+}
+
+function buildJoinUrl(raw: string): string {
+	const host = sanitizeHost(raw);
+	const withPort =
+		host.includes(':') || typeof window === 'undefined' || !window.location.port
+			? host
+			: `${host}:${window.location.port}`;
+	return `http://${withPort}/mobile`;
+}
 
 type QRCodeOptions = {
 	text: string;
