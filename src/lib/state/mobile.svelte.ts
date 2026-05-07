@@ -1,5 +1,5 @@
 /*
- * mobile.state.svelte.ts
+ * mobile.svelte.ts
  * Purpose: Svelte 5 state owner for the mobile MBTI flow.
  */
 import { createEmptySelection, type MobileScreen, type MobileSelection } from '../services/mobile/mobile.logic';

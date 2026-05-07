@@ -4,13 +4,9 @@
 	的粒子 utility 與 display 相鄰模組，避免元件直接耦合到底層實作。
 */
 
-import {
-	mbtiParticles,
-	particles,
-	seedAmbient as seedPoolAmbient,
-	spawnMBTI as spawnPoolMBTI
-} from '../../utils/pool';
-import { prewarmAll } from '../../utils/sprites';
+import { prewarmAll } from './sprite';
+import { seedAmbient as seedDisplayAmbient, spawnMBTI as spawnDisplayMBTI, state } from './core';
+import type { RuntimeFacePoint, RuntimeParticle } from './types';
 
 export type ParticleFace = { x: number; y: number; smile?: boolean };
 export type ParticleInteraction = { x: number; y: number; score?: number };
@@ -19,8 +15,8 @@ type ParticleEngineOptions = {
 	max?: number;
 };
 
-function detachParticle(particle: unknown) {
-	for (const list of Object.values(mbtiParticles) as Array<(typeof mbtiParticles)[string]>) {
+function detachParticle(particle: RuntimeParticle) {
+	for (const list of Object.values(state.mbtiParticles) as RuntimeParticle[][]) {
 		const index = list.indexOf(particle);
 		if (index !== -1) {
 			list.splice(index, 1);
@@ -29,12 +25,6 @@ function detachParticle(particle: unknown) {
 }
 
 export default class ParticleEngine {
-	particles = particles;
-	private width = typeof window !== 'undefined' ? window.innerWidth : 800;
-	private height = typeof window !== 'undefined' ? window.innerHeight : 600;
-	private faces: ParticleFace[] = [];
-	private interactions: ParticleInteraction[] = [];
-	private emotion: 'neutral' | 'smile' = 'neutral';
 	private readonly max: number;
 
 	constructor(options: ParticleEngineOptions = {}) {
@@ -50,58 +40,59 @@ export default class ParticleEngine {
 
 	resize(width: number, height: number) {
 		// 更新粒子系統使用的畫布尺寸，供 spawn 與 update 計算使用。
-		this.width = width;
-		this.height = height;
+		state.W = width;
+		state.H = height;
 	}
 
 	setFaces(faces: ParticleFace[]) {
 		// 接收目前偵測到的人臉座標，並推導整體情緒狀態。
-		this.faces = Array.isArray(faces) ? faces : [];
-		this.emotion = this.faces.some((face) => face?.smile) ? 'smile' : 'neutral';
+		state.faces = Array.isArray(faces)
+			? faces.map((face) => ({ x: face.x, y: face.y, smile: Boolean(face.smile) }))
+			: [];
+		state.emotion = state.faces.some((face) => face?.smile) ? 'smile' : 'neutral';
 	}
 
 	setInteractions(interactions: ParticleInteraction[]) {
 		// 接收手勢/互動點資料，讓粒子 update 時可使用同一份 pixel-space 座標。
-		this.interactions = Array.isArray(interactions) ? interactions : [];
+		state.activePinchPoints = Array.isArray(interactions)
+			? interactions.map((interaction) => ({ x: interaction.x, y: interaction.y }))
+			: [];
 	}
 
 	seedAmbient(count: number) {
 		// 補種背景粒子，沿用現行 pool 實作。
-		seedPoolAmbient(count, this.width, this.height);
+		seedDisplayAmbient(count);
 		this.trimOverflow();
 	}
 
-	spawnMBTI(mbti: string, color?: string, counts: Record<string, number> = {}) {
+	spawnMBTI(mbti: string, color?: string, _counts: Record<string, number> = {}) {
 		// 建立 MBTI 粒子並套用現行 quota/prune 行為。
-		spawnPoolMBTI(mbti, color ?? '#ffffff', this.width, this.height, counts);
+		spawnDisplayMBTI(mbti, color ?? '#ffffff');
 		this.trimOverflow();
 	}
 
 	step(_deltaMs: number) {
 		// 驅動所有粒子的物理更新；delta 目前沿用 legacy 固定步進，不直接使用。
-		for (const particle of particles) {
-			particle.update(
-				this.faces,
-				this.emotion,
-				this.interactions,
-				mbtiParticles,
-				this.width,
-				this.height
-			);
+		for (const particle of state.particles) {
+			particle.update(state.faces, state.emotion);
 		}
 		this.trimOverflow();
 	}
 
 	render(ctx: CanvasRenderingContext2D) {
 		// 將目前粒子狀態繪製到 canvas context。
-		for (const particle of particles) {
+		for (const particle of state.particles) {
 			particle.draw(ctx);
 		}
 	}
 
+	get particles() {
+		return state.particles;
+	}
+
 	private trimOverflow() {
-		while (particles.length > this.max) {
-			const particle = particles.shift();
+		while (state.particles.length > this.max) {
+			const particle = state.particles.shift();
 			if (!particle) {
 				break;
 			}

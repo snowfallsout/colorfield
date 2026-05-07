@@ -6,7 +6,7 @@ under `devnotes/DEVNOTES_{timestamp}.md` and reference it here.
 
 # DEVNOTES — Current
 
-Last snapshot: [DEVNOTES_2026-05-06T163951Z.md](DEVNOTES_2026-05-06T163951Z.md)
+Last snapshot: [DEVNOTES_2026-05-06T171458Z.md](DEVNOTES_2026-05-06T171458Z.md)
 
 Policy (short):
 
@@ -21,6 +21,8 @@ Snapshot created to preserve current state before proceeding with repo-wide chan
 
 Recent activity (delta):
 
+- 2026-05-06: Added [DEVNOTES_2026-05-06T171458Z.md](DEVNOTES_2026-05-06T171458Z.md) recording the first legacy utils deletion batch.
+- 2026-05-06: Added [DEVNOTES_2026-05-06T170821Z.md](DEVNOTES_2026-05-06T170821Z.md) recording the follow-up plan to move the display particle engine off the legacy `utils/pool.ts` and `utils/sprites.ts` chain.
 - 2026-05-06: Added [DEVNOTES_2026-05-06T163951Z.md](DEVNOTES_2026-05-06T163951Z.md) recording the consolidation pass that keeps `state/` limited to `.svelte.ts` files and merges single-consumer display helpers into services.
 
 - 2026-04-24: Created snapshot DEVNOTES_2026-04-24T120000Z.md capturing function-area migration progress and outstanding work.
@@ -67,6 +69,8 @@ Next planned actions:
 - Continue phase-1 display-domain migration by moving runtime owner code from `function/runtime/*` into `display/*`, then re-scope `utils/state.ts` into `state/display.svelte.ts`.
 - Continue the service-centric refactor by finishing the shell cleanup around `utils/state.ts`, `utils/session.ts`, `services/displayRuntime.ts`, and `services/displaySession.ts`.
 - Continue the service-centric refactor by moving display-only helper types and smile hashing logic next to `state/*` owners, then re-evaluating the stale `app.d.ts` declaration.
+- Continue the service-centric refactor by moving the display particle engine off `utils/pool.ts` and `utils/sprites.ts`, then retiring any dead pool/sprite compatibility helpers.
+- Continue the service-centric refactor by deleting the remaining legacy helpers under `src/lib/utils/` that no longer have callers.
 - Continue pruning legacy `function/*` shells by checking `function/runtime/index.ts` and adjacent runtime barrels for zero-reference deletion candidates.
 - Continue pruning `function/runtime/*` from the outside in, starting with public barrels and type ownership before touching active runtime kernels.
 - Continue shrinking `function/runtime/*` by moving bridge concerns and global legacy helpers behind `services/display/*` without changing runtime behavior.
@@ -87,7 +91,5 @@ Next planned actions:
 - Keep `utils/pool.ts` and `utils/sprites.ts` until the display particle engine is rehomed off the legacy utility path.
 - Keep active source branding aligned with `InkLumina` while leaving protected static reference files untouched unless explicitly authorized.
 - Keep mobile helper ownership aligned with `services/mobile` and `state/` so import paths stay consistent after file moves.
-- Keep internal identifiers generic unless the name itself must be user-visible plain text.
-
-<!-- End of current DEVNOTES index -->
+- Keep internal identifiers generic unless the name itself must be user-visible plain text. <!-- End of current DEVNOTES index -->
 
