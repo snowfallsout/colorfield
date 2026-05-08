@@ -5,7 +5,7 @@
  */
 // file-level: Svelte rune for media state and helpers (typed)
 import { browser } from '$app/environment';
-import settings from '$lib/config/settings';
+import { visionSettings } from '$lib/settings/vision';
 import { setHandBadge } from '$lib/state/ui.svelte';
 import { preload as mediapipePreload, start as mediapipeStart, stop as mediapipeStop } from '$lib/services/mediapipe';
 
@@ -37,13 +37,13 @@ export const media = $state({
 });
 
 // Maximum number of crowd members kept in memory.
-export const CROWD_CAP = 30;
+export const CROWD_CAP = visionSettings.media.crowdCap;
 
 // Maximum number of active interaction points kept in memory.
-export const ACTIVE_CAP = 8;
+export const ACTIVE_CAP = visionSettings.media.activeCap;
 
 // Keep a short loading dwell so the UI does not flash while still feeling responsive.
-const CAMERA_LOADING_MIN_MS = 900;
+const CAMERA_LOADING_MIN_MS = visionSettings.media.cameraLoadingMinMs;
 
 let _starting = false;
 let _started = false;
@@ -70,10 +70,10 @@ function createMediapipeOptions(): {
 } {
   return {
     maxCrowd: CROWD_CAP,
-    topNHands: Math.min(2, ACTIVE_CAP),
-    handsModelComplexity: 1,
-    handConfidenceThreshold: settings.mediapipe.handConfidenceThreshold,
-    faceConfidenceThreshold: settings.mediapipe.faceConfidenceThreshold
+    topNHands: Math.min(visionSettings.base.topNHands, ACTIVE_CAP),
+    handsModelComplexity: visionSettings.base.handsModelComplexity,
+    handConfidenceThreshold: visionSettings.base.handConfidenceThreshold,
+    faceConfidenceThreshold: visionSettings.base.faceConfidenceThreshold
   };
 }
 
@@ -147,7 +147,7 @@ export async function initCamera(): Promise<void> {
       },
       {
         ...createMediapipeOptions(),
-        minProcessingHz: 20
+        minProcessingHz: visionSettings.base.minProcessingHz
       }
     );
 

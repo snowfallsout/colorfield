@@ -1,4 +1,5 @@
 import { browser } from '$app/environment';
+import { publicConfig } from '$lib/config/public';
 import { updateCounts } from '$lib/state/mbti.svelte';
 import { MBTI_PALETTES } from '$lib/shared/constants/mbti';
 import { setSessionName } from '$lib/state/session.svelte';
@@ -34,8 +35,9 @@ export async function connect(opts?: { url?: string }) {
   if (socket) return;
   // determine socket URL priority:
   // 1. explicit opts.url
-  // 2. undefined -> connect to same origin
-  const url = opts?.url ?? undefined;
+  // 2. PUBLIC_SOCKET_URL
+  // 3. undefined -> connect to same origin
+  const url = opts?.url ?? publicConfig.socketUrl;
 
   try {
     socket = createSocket(url);

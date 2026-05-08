@@ -5,6 +5,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { serverConfig } from '$lib/config/server';
 
 export type Session = {
   id: string;
@@ -19,14 +20,16 @@ type SessionFile = Session & {
   active: boolean;
 };
 
-const SESSIONS_DIR = path.join(process.cwd(), 'data', 'sessions');
+const SESSIONS_DIR = serverConfig.sessionsDir;
+const SESSION_FILE_PREFIX = serverConfig.sessionFilePrefix;
+const SESSION_FILE_RE = new RegExp(`^${SESSION_FILE_PREFIX}.+\\.json$`, 'i');
 
 function ensureSessionsDir(): void {
   fs.mkdirSync(SESSIONS_DIR, { recursive: true });
 }
 
 function sessionFilePath(id: string): string {
-  return path.join(SESSIONS_DIR, `session_${id}.json`);
+  return path.join(SESSIONS_DIR, `${SESSION_FILE_PREFIX}${id}.json`);
 }
 
 function sortSessionsNewestFirst(left: SessionFile, right: SessionFile): number {
@@ -67,14 +70,14 @@ function loadSessions(): SessionFile[] {
   ensureSessionsDir();
   const entries = fs
     .readdirSync(SESSIONS_DIR, { withFileTypes: true })
-    .filter((entry) => entry.isFile() && /^session_.+\.json$/i.test(entry.name))
+    .filter((entry) => entry.isFile() && SESSION_FILE_RE.test(entry.name))
     .map((entry) => readSession(path.join(SESSIONS_DIR, entry.name)))
     .filter((entry): entry is SessionFile => !!entry)
     .sort(sortSessionsNewestFirst);
 
   if (entries.length > 0) return entries;
 
-  const initial = createSessionRecord('InkLumina Session');
+  const initial = createSessionRecord(serverConfig.defaultSessionName);
   persistSession(initial);
   return [initial];
 }
@@ -114,7 +117,7 @@ export function getActive(): Session | null {
     };
   }
 
-  const created = createSessionRecord('InkLumina Session');
+  const created = createSessionRecord(serverConfig.defaultSessionName);
   persistSession(created);
   return {
     id: created.id,

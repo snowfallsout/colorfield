@@ -10,6 +10,7 @@
 // - `services/display/camera.ts` is the display-route-specific camera owner.
 
 import { browser } from '$app/environment';
+import { visionSettings } from '$lib/settings/vision';
 import type { CrowdMember, InteractionPoint } from '$lib/state/media.svelte';
 
 type FaceMeshLike = {
@@ -37,12 +38,12 @@ export type MediapipeOptions = {
 };
 
 const DEFAULTS: Required<Omit<MediapipeOptions, 'faceDetectorModel'>> = {
-  handsModelComplexity: 1,
-  maxCrowd: 6,
-  topNHands: 2,
-  minProcessingHz: 20,
-  handConfidenceThreshold: 0.6,
-  faceConfidenceThreshold: 0.6
+  handsModelComplexity: visionSettings.base.handsModelComplexity,
+  maxCrowd: visionSettings.base.maxCrowd,
+  topNHands: visionSettings.base.topNHands,
+  minProcessingHz: visionSettings.base.minProcessingHz,
+  handConfidenceThreshold: visionSettings.base.handConfidenceThreshold,
+  faceConfidenceThreshold: visionSettings.base.faceConfidenceThreshold
 };
 
 const FACE_MESH_SCRIPT = 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/face_mesh.js';
@@ -243,7 +244,10 @@ async function ensureVideoReady(videoEl: HTMLVideoElement) {
 
   if (!(videoEl.srcObject instanceof MediaStream)) {
     _stream = await navigator.mediaDevices.getUserMedia({
-      video: { width: 640, height: 480 },
+      video: {
+        width: visionSettings.video.width,
+        height: visionSettings.video.height
+      },
       audio: false
     });
     videoEl.srcObject = _stream;

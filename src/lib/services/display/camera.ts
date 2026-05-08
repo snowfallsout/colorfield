@@ -3,6 +3,7 @@
  * Purpose: Canonical display-service owner for camera startup, detector loading, and frame processing.
  */
 import type { DisplayLegacyWindow } from '$lib/services/display/legacy';
+import { visionSettings } from '$lib/settings/vision';
 import { mapToCanvas, state, drawFrame, updateEmotionBadge } from '$lib/services/display/core';
 import type {
 	RuntimeDetector,
@@ -221,7 +222,13 @@ export function setupCamera(): void {
 
 	console.debug('[display/runtime/camera] setupCamera: requesting camera and preparing MediaPipe load');
 
-	void navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 }, audio: false })
+	void navigator.mediaDevices.getUserMedia({
+		video: {
+			width: visionSettings.video.width,
+			height: visionSettings.video.height
+		},
+		audio: false
+	})
 		.then((stream) => {
 			if (!state.video) return;
 			state.video.srcObject = stream;
@@ -292,10 +299,10 @@ export function setupCamera(): void {
 							locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/${file}`
 						});
 						state.faceMesh.setOptions?.({
-							maxNumFaces: 6,
+							maxNumFaces: visionSettings.display.maxFaces,
 							refineLandmarks: false,
-							minDetectionConfidence: 0.5,
-							minTrackingConfidence: 0.5
+							minDetectionConfidence: visionSettings.display.faceDetectionConfidence,
+							minTrackingConfidence: visionSettings.display.faceTrackingConfidence
 						});
 						attachFaceMeshHandlers(state.faceMesh);
 						if (typeof state.faceMesh.initialize === 'function') await state.faceMesh.initialize();
@@ -319,10 +326,10 @@ export function setupCamera(): void {
 							locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${file}`
 						});
 						state.hands.setOptions?.({
-							maxNumHands: 2,
-							minDetectionConfidence: 0.7,
-							minTrackingConfidence: 0.6,
-							modelComplexity: 1
+							maxNumHands: visionSettings.display.maxHands,
+							minDetectionConfidence: visionSettings.display.handDetectionConfidence,
+							minTrackingConfidence: visionSettings.display.handTrackingConfidence,
+							modelComplexity: visionSettings.display.handsModelComplexity
 						});
 						attachHandsHandlers(state.hands);
 						if (typeof state.hands.initialize === 'function') await state.hands.initialize();
