@@ -13,7 +13,7 @@ import { connect, on } from '$lib/services/socket';
 import { pushSpawn } from '$lib/states/particles.svelte';
 import { showToast } from '$lib/states/ui.svelte';
 import { applySessionReset, applySocketState, applySpawnParticles } from '$lib/states/display.svelte';
-import { registerDisplayLegacyBridge, startDisplayLegacyRuntime, syncLegacyBridge } from '$lib/services/display/legacy';
+import { registerDisplayLegacyBridge, startDisplayLegacyRuntime, syncLegacyBridge } from '$lib/services/legacy';
 
 let realtimeBound = false;
 

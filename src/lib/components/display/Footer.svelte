@@ -7,7 +7,7 @@
 
 <script lang="ts">
 	import JoinQr from './JoinQr.svelte';
-  import { openDisplaySessionPanel } from '$lib/services/display/session';
+  import { openDisplaySessionPanel } from '$lib/services/session';
   import { displayState } from '$lib/states/display.svelte';
 
   function openSessionManager(): void {

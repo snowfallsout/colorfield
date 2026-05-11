@@ -2,7 +2,7 @@
  * src/lib/services/display/camera.ts
  * Purpose: Canonical display-service owner for camera startup, detector loading, and frame processing.
  */
-import type { DisplayLegacyWindow } from '$lib/services/display/legacy';
+import type { DisplayLegacyWindow } from '$lib/services/legacy';
 import { visionSettings } from '$lib/settings/vision';
 import { mapToCanvas, state, drawFrame, updateEmotionBadge } from '$lib/services/display/core';
 import type {

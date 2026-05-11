@@ -10,7 +10,7 @@
 	import Legend from '../../lib/components/display/Legend.svelte';
 	import SessionPanel from '../../lib/components/display/SessionPanel.svelte';
 	import { displayState, setSessionHostInput } from '../../lib/states/display.svelte';
-	import { loadSessionOverview, readSavedDisplayHost, regenerateJoinQr } from '../../lib/services/display/session';
+	import { loadSessionOverview, readSavedDisplayHost, regenerateJoinQr } from '../../lib/services/session';
 	import Toast from '../../lib/components/display/Toast.svelte';
 	import EmotionBadge from '../../lib/components/display/EmotionBadge.svelte';
 	import SmileEmoji from '../../lib/components/display/SmileEmoji.svelte';

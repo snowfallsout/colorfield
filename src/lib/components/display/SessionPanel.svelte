@@ -16,7 +16,7 @@
     deleteDisplaySession,
     regenerateJoinQr,
     viewDisplaySession
-  } from '$lib/services/display/session';
+  } from '$lib/services/session';
 
   const selectedEntries = $derived.by(() =>
     displayState.sessionPanel.selected
