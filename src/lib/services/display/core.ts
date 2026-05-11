@@ -7,9 +7,9 @@ import {
 	tickSmileEmoji as gestureTickSmileEmoji,
 	updateEmotionBadge as gestureUpdateEmotionBadge
 } from './gesture';
-import type { RuntimeHandLandmark, RuntimePoint, RuntimeRuntimeState } from '$lib/services/display/types';
+import type { RuntimeHandLandmark, RuntimePoint, RunTimeState } from '$lib/services/display/types';
 
-export const state: RuntimeRuntimeState = {
+export const state: RunTimeState = {
 	canvas: null,
 	ctx: null,
 	video: null,

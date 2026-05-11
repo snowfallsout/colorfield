@@ -1,5 +1,5 @@
 import { AMBIENT_COLS, MBTI_COLORS, MBTI_ORDER, MBTI_PALETTES, TWO_PI } from '$lib/shared/constants/mbti';
-import type { RuntimeRuntimeState, RuntimeSpriteEntry, RuntimeSpriteSet } from '$lib/services/display/types';
+import type { RunTimeState, RuntimeSpriteEntry, RuntimeSpriteSet } from '$lib/services/display/types';
 
 type SpritePalette = {
   core: string;
@@ -140,7 +140,7 @@ export function drawDiamondSparkle(ctx: CanvasRenderingContext2D, x: number, y: 
   ctx.fill();
 }
 
-export function getSpriteSet(_state: RuntimeRuntimeState, mbti: string): RuntimeSpriteSet {
+export function getSpriteSet(_state: RunTimeState, mbti: string): RuntimeSpriteSet {
   const key = mbti || '';
   let spriteSet = spriteSetCache.get(key);
   if (!spriteSet) {
@@ -150,7 +150,7 @@ export function getSpriteSet(_state: RuntimeRuntimeState, mbti: string): Runtime
   return spriteSet;
 }
 
-export function getDotSprite(_state: RuntimeRuntimeState, color: string): RuntimeSpriteSet {
+export function getDotSprite(_state: RunTimeState, color: string): RuntimeSpriteSet {
   const key = `__dot_${color}`;
   let spriteSet = spriteSetCache.get(key);
   if (!spriteSet) {
@@ -163,9 +163,9 @@ export function getDotSprite(_state: RuntimeRuntimeState, color: string): Runtim
 
 export function prewarmAll(): void {
   MBTI_ORDER.forEach((mbti) => {
-    void getSpriteSet({} as RuntimeRuntimeState, mbti);
+    void getSpriteSet({} as RunTimeState, mbti);
   });
   AMBIENT_COLS.forEach((color) => {
-    void getDotSprite({} as RuntimeRuntimeState, color);
+    void getDotSprite({} as RunTimeState, color);
   });
 }

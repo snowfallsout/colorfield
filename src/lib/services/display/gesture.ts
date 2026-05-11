@@ -1,7 +1,7 @@
 import { SMILE_EMOJIS } from '$lib/shared/constants/vision';
-import type { RuntimeParticle, RuntimeRuntimeState } from '$lib/services/display/types';
+import type { RuntimeParticle, RunTimeState } from '$lib/services/display/types';
 
-export function updateEmotionBadge(state: RuntimeRuntimeState): void {
+export function updateEmotionBadge(state: RunTimeState): void {
 	const element = document.getElementById('emotion-badge');
 	if (!element) return;
 	if (!state.faces || state.faces.length === 0) {
@@ -23,7 +23,7 @@ function getRandomSmileEmoji(): string {
 	return SMILE_EMOJIS[Math.floor(Math.random() * SMILE_EMOJIS.length)] ?? '😊';
 }
 
-function getOrCreateSmileEmoji(state: RuntimeRuntimeState): HTMLDivElement {
+function getOrCreateSmileEmoji(state: RunTimeState): HTMLDivElement {
 	if (state.emojiEl) return state.emojiEl;
 	const element = document.createElement('div');
 	element.className = 'smile-emoji-persistent';
@@ -32,7 +32,7 @@ function getOrCreateSmileEmoji(state: RuntimeRuntimeState): HTMLDivElement {
 	return element;
 }
 
-export function tickSmileEmoji(state: RuntimeRuntimeState): void {
+export function tickSmileEmoji(state: RunTimeState): void {
 	const anySmiling = state.faces.some((face) => face.smile);
 	const element = getOrCreateSmileEmoji(state);
 	if (anySmiling) {
@@ -53,7 +53,7 @@ export function tickSmileEmoji(state: RuntimeRuntimeState): void {
 	state.wasAnySmiling = anySmiling;
 }
 
-export function tickDrawMode(state: RuntimeRuntimeState): void {
+export function tickDrawMode(state: RunTimeState): void {
 	const drawMode = state.drawMode;
 	const nonFieldParticles = state.particles.filter((particle: RuntimeParticle) => particle.sizeClass !== 'field');
 	const total = nonFieldParticles.length || 1;
@@ -142,7 +142,7 @@ export function tickDrawMode(state: RuntimeRuntimeState): void {
 	}
 }
 
-export function drawStrokeOverlay(state: RuntimeRuntimeState): void {
+export function drawStrokeOverlay(state: RunTimeState): void {
 	const drawMode = state.drawMode;
 	if (drawMode.phase !== 'drawing' || drawMode.strokePath.length < 2 || !state.ctx) return;
 	const ctx = state.ctx;

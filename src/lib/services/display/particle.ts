@@ -4,7 +4,7 @@ import type {
 	RuntimeFacePoint,
 	RuntimeParticle,
 	RuntimeParticleDraft,
-	RuntimeRuntimeState
+	RunTimeState
 } from '$lib/services/display/types';
 
 const TWO_PI = Math.PI * 2;
@@ -28,7 +28,7 @@ function dist2sq(ax: number, ay: number, bx: number, by: number): number {
 	return dx * dx + dy * dy;
 }
 
-function nearestFace(state: RuntimeRuntimeState, px: number, py: number): RuntimeFacePoint | null {
+function nearestFace(state: RunTimeState, px: number, py: number): RuntimeFacePoint | null {
 	if (!state.faces || state.faces.length === 0) return null;
 	let best: RuntimeFacePoint | null = null;
 	let bestDistance = Infinity;
@@ -44,7 +44,7 @@ function nearestFace(state: RuntimeRuntimeState, px: number, py: number): Runtim
 
 // sparkle helper moved to display.sprite.ts
 
-export function createParticle(state: RuntimeRuntimeState, x: number, y: number, color: string, mbti: string | null): RuntimeParticle {
+export function createParticle(state: RunTimeState, x: number, y: number, color: string, mbti: string | null): RuntimeParticle {
 	const sizeClass = pickSizeClass();
 	const params = SIZE_CLASS_PARAMS[sizeClass];
 	const particleDraft: RuntimeParticleDraft = {
@@ -72,7 +72,7 @@ export function createParticle(state: RuntimeRuntimeState, x: number, y: number,
 	};
 	const particle = particleDraft as RuntimeParticle;
 
-	particle.update = function (_faces: RuntimeFacePoint[], _emotion: RuntimeRuntimeState['emotion']) {
+	particle.update = function (_faces: RuntimeFacePoint[], _emotion: RunTimeState['emotion']) {
 		this.age++;
 		this.alpha = Math.min(this.alphaT, this.alpha + 0.04);
 		const currentParams = SIZE_CLASS_PARAMS[this.sizeClass as keyof typeof SIZE_CLASS_PARAMS];
@@ -218,7 +218,7 @@ export function createParticle(state: RuntimeRuntimeState, x: number, y: number,
 	return particle;
 }
 
-function pruneType(state: RuntimeRuntimeState, mbti: string): void {
+function pruneType(state: RunTimeState, mbti: string): void {
 	const particles = state.mbtiParticles[mbti];
 	if (!particles) return;
 	const total = Object.values(state.mbtiParticles).reduce((sum: number, entry) => sum + (entry?.length ?? 0), 0) || 1;
@@ -232,13 +232,13 @@ function pruneType(state: RuntimeRuntimeState, mbti: string): void {
 	}
 }
 
-function pruneAllTypes(state: RuntimeRuntimeState): void {
+function pruneAllTypes(state: RunTimeState): void {
 	for (const key of Object.keys(state.mbtiParticles)) {
 		pruneType(state, key);
 	}
 }
 
-export function spawnMBTI(state: RuntimeRuntimeState, mbti: string, color: string): void {
+export function spawnMBTI(state: RunTimeState, mbti: string, color: string): void {
 	if (!state.mbtiParticles[mbti]) {
 		state.mbtiParticles[mbti] = [];
 	}
@@ -254,7 +254,7 @@ export function spawnMBTI(state: RuntimeRuntimeState, mbti: string, color: strin
 	pruneAllTypes(state);
 }
 
-export function seedAmbient(state: RuntimeRuntimeState, count: number): void {
+export function seedAmbient(state: RunTimeState, count: number): void {
 	for (let index = 0; index < count; index++) {
 		const color = AMBIENT_COLS[index % AMBIENT_COLS.length];
 		const particle = createParticle(state, Math.random() * state.W, Math.random() * state.H, color, null);

@@ -105,7 +105,7 @@ export interface RuntimeParticle {
 	phaseOffset: number;
 	_sprites: RuntimeSpriteSet;
 	_drawTarget: RuntimePoint | null;
-	update: (faces: RuntimeFacePoint[], emotion: RuntimeRuntimeState['emotion']) => void;
+	update: (faces: RuntimeFacePoint[], emotion: RunTimeState['emotion']) => void;
 	draw: (ctx: CanvasRenderingContext2D) => void;
 }
 
@@ -118,7 +118,7 @@ export interface RuntimeDetector {
 	initialize?: () => Promise<void> | void;
 }
 
-export type RuntimeRuntimeState = {
+export type RunTimeState = {
 	canvas: HTMLCanvasElement | null;
 	ctx: CanvasRenderingContext2D | null;
 	video: HTMLVideoElement | null;

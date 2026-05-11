@@ -1,6 +1,6 @@
-import type { RuntimePoint, RuntimeRuntimeState } from '$lib/services/display/types';
+import type { RuntimePoint, RunTimeState } from '$lib/services/display/types';
 
-export function mapToCanvas(state: RuntimeRuntimeState, normX: number, normY: number): RuntimePoint {
+export function mapToCanvas(state: RunTimeState, normX: number, normY: number): RuntimePoint {
 	if (!state.video || state.video.videoWidth === 0) return { x: 0, y: 0 };
 	const scale = Math.max(state.W / state.video.videoWidth, state.H / state.video.videoHeight);
 	const drawWidth = state.video.videoWidth * scale;
@@ -13,7 +13,7 @@ export function mapToCanvas(state: RuntimeRuntimeState, normX: number, normY: nu
 	};
 }
 
-export function drawVideoLayer(state: RuntimeRuntimeState): void {
+export function drawVideoLayer(state: RunTimeState): void {
 	const ctx = state.ctx;
 	if (!ctx) return;
 	if (state.camOn && state.video && state.video.readyState >= 2 && state.video.videoWidth > 0) {
