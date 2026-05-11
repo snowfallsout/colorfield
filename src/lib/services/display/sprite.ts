@@ -14,6 +14,10 @@ const DOT_REF_R = 16;
 
 const spriteSetCache = new Map<string, RuntimeSpriteSet>();
 
+export function clearSpriteCache(): void {
+  spriteSetCache.clear();
+}
+
 function makeCanvas(half: number) {
   const size = half * 2;
   const canvas = document.createElement('canvas');

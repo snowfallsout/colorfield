@@ -1,4 +1,5 @@
 import { AMBIENT_COLS_DISPLAY as AMBIENT_COLS } from '$lib/shared/constants/vision';
+import { displaySettings } from '$lib/settings/display';
 import { getSpriteSet, getDotSprite, drawDiamondSparkle } from './sprite';
 import type {
 	RuntimeFacePoint,
@@ -9,11 +10,56 @@ import type {
 
 const TWO_PI = Math.PI * 2;
 
-const SIZE_CLASS_PARAMS = {
-	dot: { sizeMin: 2, sizeMax: 12, alphaMin: 0.35, alphaMax: 0.95, speedCap: 6, drag: 0.992, accel: 0.45 },
-	blob: { sizeMin: 20, sizeMax: 40, alphaMin: 0.12, alphaMax: 0.3, speedCap: 4, drag: 0.986, accel: 0.2 },
-	field: { sizeMin: 40, sizeMax: 80, alphaMin: 0.04, alphaMax: 0.12, speedCap: 2, drag: 0.978, accel: 0.08 }
-} as const;
+function createSizeClassParams() {
+	const [dotMin, dotMax] = displaySettings.physics.particleSizeRange;
+	const dotSizeMin = Math.max(0.5, dotMin);
+	const dotSizeMax = Math.max(dotSizeMin, dotMax);
+	const blobSizeMin = Math.max(dotSizeMin * 6, 12);
+	const blobSizeMax = Math.max(dotSizeMax * 6, blobSizeMin + 4);
+	const fieldSizeMin = Math.max(dotSizeMin * 16, 24);
+	const fieldSizeMax = Math.max(dotSizeMax * 16, fieldSizeMin + 8);
+	const drag = displaySettings.physics.drag;
+	const attraction = displaySettings.physics.attractionStrength;
+	const repulsion = displaySettings.physics.repulsionStrength;
+
+	return {
+		dot: {
+			sizeMin: dotSizeMin,
+			sizeMax: dotSizeMax,
+			alphaMin: 0.35,
+			alphaMax: 0.95,
+			speedCap: 4 + attraction * 3.3333333333,
+			drag: Math.max(0.75, 1 - drag * 0.16),
+			accel: 0.2 + repulsion * 0.3125
+		},
+		blob: {
+			sizeMin: blobSizeMin,
+			sizeMax: blobSizeMax,
+			alphaMin: 0.12,
+			alphaMax: 0.3,
+			speedCap: 2.5 + attraction * 2.5,
+			drag: Math.max(0.7, 1 - drag * 0.28),
+			accel: 0.08 + repulsion * 0.15
+		},
+		field: {
+			sizeMin: fieldSizeMin,
+			sizeMax: fieldSizeMax,
+			alphaMin: 0.04,
+			alphaMax: 0.12,
+			speedCap: 1 + attraction * 1.6666666667,
+			drag: Math.max(0.65, 1 - drag * 0.44),
+			accel: 0.02 + repulsion * 0.075
+		}
+	} as const;
+}
+
+function getSizeClassParams(sizeClass: 'dot' | 'blob' | 'field') {
+	return createSizeClassParams()[sizeClass];
+}
+
+function getSpawnBurstCount(): number {
+	return Math.max(6, Math.min(72, Math.round(displaySettings.physics.spawnRate * 0.6)));
+}
 
 function pickSizeClass(): 'dot' | 'blob' | 'field' {
 	const value = Math.random();
@@ -46,7 +92,7 @@ function nearestFace(state: RunTimeState, px: number, py: number): RuntimeFacePo
 
 export function createParticle(state: RunTimeState, x: number, y: number, color: string, mbti: string | null): RuntimeParticle {
 	const sizeClass = pickSizeClass();
-	const params = SIZE_CLASS_PARAMS[sizeClass];
+	const params = getSizeClassParams(sizeClass);
 	const particleDraft: RuntimeParticleDraft = {
 		x,
 		y,
@@ -75,7 +121,7 @@ export function createParticle(state: RunTimeState, x: number, y: number, color:
 	particle.update = function (_faces: RuntimeFacePoint[], _emotion: RunTimeState['emotion']) {
 		this.age++;
 		this.alpha = Math.min(this.alphaT, this.alpha + 0.04);
-		const currentParams = SIZE_CLASS_PARAMS[this.sizeClass as keyof typeof SIZE_CLASS_PARAMS];
+		const currentParams = getSizeClassParams(this.sizeClass);
 		if (this.age % 2 === 0) {
 			this.trail.push({ x: this.x, y: this.y, s: this.size });
 			if (this.trail.length > this.myTrailMax) {
@@ -84,6 +130,7 @@ export function createParticle(state: RunTimeState, x: number, y: number, color:
 		}
 
 		if (state.activePinchPoints.length > 0 && this.sizeClass !== 'field') {
+			const repulsionStrength = Math.max(0.2, displaySettings.physics.repulsionStrength);
 			let nearest = state.activePinchPoints[0];
 			if (state.activePinchPoints.length > 1) {
 				const d0 = dist2sq(state.activePinchPoints[0].x, state.activePinchPoints[0].y, this.x, this.y);
@@ -93,7 +140,7 @@ export function createParticle(state: RunTimeState, x: number, y: number, color:
 			const pdx = nearest.x - this.x;
 			const pdy = nearest.y - this.y;
 			const pd = Math.sqrt(pdx * pdx + pdy * pdy) || 1;
-			const str = Math.min(6, 500 / pd) * 0.22;
+			const str = Math.min(6, 500 / pd) * 0.14 * (0.5 + repulsionStrength);
 			this.vx += (pdx / pd) * str + (Math.random() - 0.5) * 0.4;
 			this.vy += (pdy / pd) * str + (Math.random() - 0.5) * 0.4;
 			this.vx *= 0.8;
@@ -125,6 +172,7 @@ export function createParticle(state: RunTimeState, x: number, y: number, color:
 		switch (this.state) {
 			case 'born':
 			case 'free': {
+				this.vy += displaySettings.physics.gravity * 0.016;
 				this.vx += (Math.random() - 0.5) * currentParams.accel;
 				this.vy += (Math.random() - 0.5) * currentParams.accel;
 				if (this.mbti && this.sizeClass === 'dot' && this.age % 4 === 0) {
@@ -158,10 +206,11 @@ export function createParticle(state: RunTimeState, x: number, y: number, color:
 			case 'attracted': {
 				const target = this.targetF;
 				if (!target) break;
+				const attractionStrength = Math.max(0.2, displaySettings.physics.attractionStrength);
 				const dx = target.x - this.x;
 				const dy = target.y - this.y;
 				const distance = Math.sqrt(dx * dx + dy * dy) || 1;
-				const force = Math.min(2.2, 90 / distance) * 0.085;
+				const force = Math.min(2.2, 90 / distance) * 0.055 * (0.5 + attractionStrength);
 				this.vx += (dx / distance) * force;
 				this.vy += (dy / distance) * force;
 				this.vx *= 0.92;
@@ -171,11 +220,12 @@ export function createParticle(state: RunTimeState, x: number, y: number, color:
 			case 'swirling': {
 				const target = this.targetF;
 				if (!target) break;
+				const orbitPull = 0.04 + displaySettings.physics.attractionStrength * 0.0666666667;
 				this.orbitA += this.orbitSpd * 1.6;
 				const targetX = target.x + Math.cos(this.orbitA) * this.orbitR;
 				const targetY = target.y + Math.sin(this.orbitA) * this.orbitR;
-				this.vx += (targetX - this.x) * 0.08;
-				this.vy += (targetY - this.y) * 0.08;
+				this.vx += (targetX - this.x) * orbitPull;
+				this.vy += (targetY - this.y) * orbitPull;
 				this.vx *= 0.86;
 				this.vy *= 0.86;
 				break;
@@ -244,7 +294,7 @@ export function spawnMBTI(state: RunTimeState, mbti: string, color: string): voi
 	}
 	const centerX = state.W / 2;
 	const centerY = state.H / 2;
-	for (let index = 0; index < 18; index++) {
+	for (let index = 0; index < getSpawnBurstCount(); index++) {
 		const particle = createParticle(state, centerX, centerY, color, mbti);
 		particle.vx = (Math.random() - 0.5) * 40;
 		particle.vy = (Math.random() - 0.5) * 40;

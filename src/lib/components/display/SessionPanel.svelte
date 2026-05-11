@@ -12,30 +12,15 @@
     setSessionHostInput
   } from '$lib/states/display.svelte';
   import {
+    copyDisplayJoinUrl,
     createDisplaySession,
-    deleteDisplaySession,
+    deleteDisplaySessionWithConfirm,
     regenerateJoinQr,
     viewDisplaySession
   } from '$lib/services/session';
 
-  const selectedEntries = $derived.by(() =>
-    displayState.sessionPanel.selected
-      ? Object.entries(displayState.sessionPanel.selected.counts).sort((left, right) => right[1] - left[1])
-      : []
-  );
-
   function closePanel(): void {
     closeSessionPanel();
-  }
-
-  function copyJoinUrl(): void {
-	const url = displayState.sessionPanel.joinUrl;
-    if (!url) return;
-    if (navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(url).catch(() => {});
-    } else {
-      prompt('Copy session URL', url);
-    }
   }
 
   function handleBackdropClick(event: MouseEvent): void {
@@ -53,8 +38,7 @@
   }
 
   function handleDelete(id: string): void {
-    if (!confirm('确认删除此历史记录？')) return;
-    void deleteDisplaySession(id);
+    void deleteDisplaySessionWithConfirm(id);
   }
 
   function handleGenerateQr(): void {
@@ -71,7 +55,7 @@
       <div class="label">Session</div>
       <div class="name">{displayState.sessionLabel || '—'}</div>
       <div class="actions">
-    <button class="sp-btn" onclick={copyJoinUrl} title="Copy session link" disabled={!displayState.sessionPanel.joinUrl}>Copy</button>
+    <button class="sp-btn" onclick={() => void copyDisplayJoinUrl()} title="Copy session link" disabled={!displayState.sessionPanel.joinUrl}>Copy</button>
       </div>
     </div>
 
@@ -142,10 +126,10 @@
 		  创建：{new Date(displayState.sessionPanel.selected.createdAt).toLocaleString()}<br>
 		  总人数：{displayState.sessionPanel.selected.total}
         </div>
-		{#if selectedEntries.length}
+    {#if displayState.sessionPanel.selectedCountRows.length}
           <ul class="sp-detail-counts">
-			{#each selectedEntries as [mbti, count] (mbti)}
-              <li>{mbti}: {count}</li>
+      {#each displayState.sessionPanel.selectedCountRows as item (item.label)}
+          <li>{item.label}: {item.count}</li>
             {/each}
           </ul>
         {:else}

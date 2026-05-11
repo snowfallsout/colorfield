@@ -36,14 +36,17 @@ export const media = $state({
   emotion: 'neutral' as 'neutral' | 'smile'
 });
 
-// Maximum number of crowd members kept in memory.
-export const CROWD_CAP = visionSettings.media.crowdCap;
+function getCrowdCap(): number {
+  return visionSettings.media.crowdCap;
+}
 
-// Maximum number of active interaction points kept in memory.
-export const ACTIVE_CAP = visionSettings.media.activeCap;
+function getActiveCap(): number {
+  return visionSettings.media.activeCap;
+}
 
-// Keep a short loading dwell so the UI does not flash while still feeling responsive.
-const CAMERA_LOADING_MIN_MS = visionSettings.media.cameraLoadingMinMs;
+function getCameraLoadingMinMs(): number {
+  return visionSettings.media.cameraLoadingMinMs;
+}
 
 let _starting = false;
 let _started = false;
@@ -53,7 +56,7 @@ async function waitForLoadingFloor(startedAt: number): Promise<void> {
   if (!browser) return;
 
   const elapsed = performance.now() - startedAt;
-  const remaining = CAMERA_LOADING_MIN_MS - elapsed;
+  const remaining = getCameraLoadingMinMs() - elapsed;
   if (remaining <= 0) return;
 
   await new Promise<void>((resolve) => {
@@ -69,8 +72,8 @@ function createMediapipeOptions(): {
   faceConfidenceThreshold: number;
 } {
   return {
-    maxCrowd: CROWD_CAP,
-    topNHands: Math.min(visionSettings.base.topNHands, ACTIVE_CAP),
+    maxCrowd: getCrowdCap(),
+    topNHands: Math.min(visionSettings.base.topNHands, getActiveCap()),
     handsModelComplexity: visionSettings.base.handsModelComplexity,
     handConfidenceThreshold: visionSettings.base.handConfidenceThreshold,
     faceConfidenceThreshold: visionSettings.base.faceConfidenceThreshold
@@ -91,21 +94,21 @@ export async function preloadCamera(): Promise<void> {
 // Replace the current crowd snapshot with a trimmed, timestamped list.
 export function setCrowd(m: CrowdMember[]) {
   const ts = Date.now();
-  const trimmed = m.slice(0, CROWD_CAP).map((it) => ({ ...it, ts: it.ts || ts }));
+  const trimmed = m.slice(0, getCrowdCap()).map((it) => ({ ...it, ts: it.ts || ts }));
   media.crowd = trimmed;
 }
 
 // Prepend a single crowd member while enforcing the crowd cap.
 export function pushCrowdMember(it: CrowdMember) {
   const ts = Date.now();
-  const next = [{ ...it, ts }, ...media.crowd].slice(0, CROWD_CAP);
+  const next = [{ ...it, ts }, ...media.crowd].slice(0, getCrowdCap());
   media.crowd = next;
 }
 
 // Replace the active interaction list with a trimmed, timestamped list.
 export function setActiveInteractions(a: InteractionPoint[]) {
   const ts = Date.now();
-  const trimmed = a.slice(0, ACTIVE_CAP).map((it) => ({ ...it, ts: it.ts || ts }));
+  const trimmed = a.slice(0, getActiveCap()).map((it) => ({ ...it, ts: it.ts || ts }));
   media.activeInteractions = trimmed;
 }
 

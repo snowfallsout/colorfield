@@ -37,14 +37,16 @@ export type MediapipeOptions = {
   faceConfidenceThreshold?: number;
 };
 
-const DEFAULTS: Required<Omit<MediapipeOptions, 'faceDetectorModel'>> = {
-  handsModelComplexity: visionSettings.base.handsModelComplexity,
-  maxCrowd: visionSettings.base.maxCrowd,
-  topNHands: visionSettings.base.topNHands,
-  minProcessingHz: visionSettings.base.minProcessingHz,
-  handConfidenceThreshold: visionSettings.base.handConfidenceThreshold,
-  faceConfidenceThreshold: visionSettings.base.faceConfidenceThreshold
-};
+function getDefaultOptions(): Required<Omit<MediapipeOptions, 'faceDetectorModel'>> {
+  return {
+    handsModelComplexity: visionSettings.base.handsModelComplexity,
+    maxCrowd: visionSettings.base.maxCrowd,
+    topNHands: visionSettings.base.topNHands,
+    minProcessingHz: visionSettings.base.minProcessingHz,
+    handConfidenceThreshold: visionSettings.base.handConfidenceThreshold,
+    faceConfidenceThreshold: visionSettings.base.faceConfidenceThreshold
+  };
+}
 
 const FACE_MESH_SCRIPT = 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4/face_mesh.js';
 const HANDS_SCRIPT = 'https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.js';
@@ -77,7 +79,7 @@ function clamp01(v: number): number {
 
 function mergedOptions(opts?: MediapipeOptions): Required<Omit<MediapipeOptions, 'faceDetectorModel'>> & Pick<MediapipeOptions, 'faceDetectorModel'> {
   return {
-    ...DEFAULTS,
+    ...getDefaultOptions(),
     ..._baseOpts,
     ...opts
   };

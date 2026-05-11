@@ -11,7 +11,7 @@ import type {
 	SpawnParticlesPayload
 } from '$lib/shared/contracts';
 import { MBTI_COLORS, MBTI_ORDER } from '$lib/shared/constants/mbti';
-import type { DisplayLegendRow, DisplayState } from '$lib/types/display';
+import type { DisplayLegendRow, DisplaySessionCountRow, DisplayState } from '$lib/types/display';
 
 function createDefaultLegendRows(): DisplayLegendRow[] {
 	return MBTI_ORDER.map((label) => ({
@@ -24,15 +24,22 @@ function createDefaultLegendRows(): DisplayLegendRow[] {
 	}));
 }
 
-function cloneLegendRows(rows: DisplayLegendRow[]): DisplayLegendRow[] {
-	return rows.map((row) => ({ ...row }));
-}
-
 function totalFromCounts(counts: SessionCounts): number {
 	return Object.values(counts).reduce((sum, count) => sum + Number(count || 0), 0);
 }
 
-const baseLegendRows = createDefaultLegendRows();
+function createSelectedCountRows(selected: SessionRecord | null): DisplaySessionCountRow[] {
+	if (!selected) {
+		return [];
+	}
+
+	return Object.entries(selected.counts)
+		.sort((left, right) => right[1] - left[1])
+		.map(([label, count]) => ({
+			label,
+			count
+		}));
+}
 
 const defaultState: DisplayState = {
 	header: {
@@ -47,7 +54,7 @@ const defaultState: DisplayState = {
 		title: 'Present',
 		emptyLabel: 'No participants yet',
 		glowColor: 'transparent',
-		rows: cloneLegendRows(baseLegendRows)
+		rows: createDefaultLegendRows()
 	},
 	hints: {
 		interaction: 'Try smiling · Pinch your fingers and move your hands',
@@ -74,6 +81,7 @@ const defaultState: DisplayState = {
 		joinQrDataUrl: '',
 		history: [],
 		selected: null,
+		selectedCountRows: [],
 		closeLabel: '关闭场次管理',
 		title: '活动场次管理',
 		newSessionPlaceholder: '新活动名称（可留空）',
@@ -110,7 +118,7 @@ export function setLegendCounts(counts: SessionCounts, total = totalFromCounts(c
 	let topLabel = '';
 	let topCount = 0;
 
-	const nextRows = baseLegendRows.map((row) => {
+	const nextRows = createDefaultLegendRows().map((row) => {
 		const count = normalizedCounts[row.label] ?? 0;
 		if (count > topCount) {
 			topCount = count;
@@ -145,7 +153,7 @@ export function openSessionPanel(): void {
 
 export function closeSessionPanel(): void {
 	displayState.sessionPanel.open = false;
-	displayState.sessionPanel.selected = null;
+	setSelectedSession(null);
 	displayState.sessionPanel.error = '';
 }
 
@@ -179,7 +187,9 @@ export function setSessionHistory(history: SessionSummary[]): void {
 }
 
 export function setSelectedSession(selected: SessionRecord | null): void {
-	displayState.sessionPanel.selected = selected ? createSessionRecord(selected) : null;
+	const nextSelected = selected ? createSessionRecord(selected) : null;
+	displayState.sessionPanel.selected = nextSelected;
+	displayState.sessionPanel.selectedCountRows = createSelectedCountRows(nextSelected);
 }
 
 export function setJoinQr(joinUrl: string, joinQrDataUrl: string): void {
@@ -219,5 +229,5 @@ export function applySessionReset(payload: SessionResetPayload): void {
 	setSessionName(payload.session.name);
 	setLegendCounts(payload.counts ?? {}, totalFromCounts(payload.counts ?? {}));
 	displayState.sessionPanel.draftName = '';
-	displayState.sessionPanel.selected = null;
+	setSelectedSession(null);
 }

@@ -150,6 +150,19 @@ export type RuntimeWindowFlags = Window & typeof globalThis & {
 	__display_hands?: boolean;
 };
 
+export type DisplayLegacyWindow = Window & typeof globalThis & {
+	mbtiCounts?: Record<string, number>;
+	renderLegend?: () => void;
+	setSessionName?: (name: string) => void;
+	seedAmbient?: (count: number) => void;
+	_processFrame?: () => void;
+	setupCamera?: () => void;
+	loop?: () => void;
+	__displayRuntimeStarted?: boolean;
+	FaceMesh?: RuntimeConstructor<RuntimeDetector>;
+	Hands?: RuntimeConstructor<RuntimeDetector>;
+};
+
 export interface RuntimeConstructor<TInstance> {
 	new (options: { locateFile: (file: string) => string }): TInstance;
 }

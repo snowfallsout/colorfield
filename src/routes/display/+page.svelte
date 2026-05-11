@@ -17,14 +17,38 @@
 	import HandBadge from '../../lib/components/display/HandBadge.svelte';
 	import CamToggle from '../../lib/components/display/CamToggle.svelte';
 	import Footer from '../../lib/components/display/Footer.svelte';
+	import { hydrateControlProfile } from '$lib/services/control';
+	import { getControlRuntimeDefaults } from '$lib/services/control.shared';
+	import { initCamera } from '$lib/states/media.svelte';
+	import { setWaterOverlay } from '$lib/states/ui.svelte';
 
 	onMount(() => {
-		const savedHost = readSavedDisplayHost();
-		if (savedHost) {
-			setSessionHostInput(savedHost);
-		}
-		void regenerateJoinQr();
-		void loadSessionOverview();
+		let disposed = false;
+
+		void (async () => {
+			await hydrateControlProfile();
+			if (disposed) {
+				return;
+			}
+
+			const defaults = getControlRuntimeDefaults();
+			setWaterOverlay(defaults.waterOverlay);
+
+			const savedHost = readSavedDisplayHost();
+			if (savedHost) {
+				setSessionHostInput(savedHost);
+			}
+			await regenerateJoinQr();
+			await loadSessionOverview();
+
+			if (defaults.cameraEnabled) {
+				await initCamera().catch(() => {});
+			}
+		})();
+
+		return () => {
+			disposed = true;
+		};
 	});
 </script>
 

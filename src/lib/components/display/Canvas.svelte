@@ -12,6 +12,7 @@
 
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
+  import { displaySettings } from '$lib/settings/display';
   import ParticleEngine from '$lib/services/display/particleEngine';
   import { bindRealtimeSocket } from '$lib/services/display/realtime';
   import { popSpawn } from '$lib/states/particles.svelte';
@@ -21,6 +22,8 @@
   let canvas = $state<HTMLCanvasElement | null>(null);
   let ctx = $state<CanvasRenderingContext2D | null>(null);
   let engine = $state<ParticleEngine | null>(null);
+  let viewportWidth = $state(0);
+  let viewportHeight = $state(0);
   let rafId = 0;
   let last = 0;
 
@@ -35,9 +38,15 @@
       - Called on mount and on window `resize` events
    */
     if (!canvas) return;
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    engine?.resize(canvas.width, canvas.height);
+    viewportWidth = window.innerWidth;
+    viewportHeight = window.innerHeight;
+    const pixelRatio = displaySettings.canvas.pixelRatio ?? 1;
+    canvas.width = Math.floor(viewportWidth * pixelRatio);
+    canvas.height = Math.floor(viewportHeight * pixelRatio);
+    canvas.style.width = `${viewportWidth}px`;
+    canvas.style.height = `${viewportHeight}px`;
+    ctx?.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    engine?.resize(viewportWidth, viewportHeight);
   }
 
 
@@ -49,7 +58,8 @@
       - Returns an object `{ x, y }` in PIXEL space
     */
     if (!canvas) return { x: 0, y: 0 };
-    const W = canvas.width, H = canvas.height;
+    const W = viewportWidth || window.innerWidth;
+    const H = viewportHeight || window.innerHeight;
     // Prefer a live video element for correct scale/crop mapping when available
     const v = media.videoEl || (document.getElementById('video-bg') as HTMLVideoElement | null);
     if (!v || v.videoWidth === 0) {
@@ -104,20 +114,20 @@
     );
 
     // clear and render
-    ctx.fillStyle = showCameraWater ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,1)';
-    ctx.fillRect(0, 0, canvas!.width, canvas!.height);
+    ctx.fillStyle = showCameraWater ? 'rgba(255,255,255,0.22)' : (displaySettings.canvas.clearColor ?? '#FFFFFF');
+    ctx.fillRect(0, 0, viewportWidth, viewportHeight);
 
     if (showCameraWater && video) {
       const vw = video.videoWidth;
       const vh = video.videoHeight;
-      const scale = Math.max(canvas!.width / vw, canvas!.height / vh);
+      const scale = Math.max(viewportWidth / vw, viewportHeight / vh);
       const dw = vw * scale;
       const dh = vh * scale;
-      const dx = (canvas!.width - dw) / 2;
-      const dy = (canvas!.height - dh) / 2;
+      const dx = (viewportWidth - dw) / 2;
+      const dy = (viewportHeight - dh) / 2;
 
       ctx.save();
-      ctx.translate(canvas!.width, 0);
+      ctx.translate(viewportWidth, 0);
       ctx.scale(-1, 1);
       ctx.globalAlpha = 0.45;
       ctx.drawImage(video, dx, dy, dw, dh);
@@ -158,7 +168,7 @@
     */
     if (!canvas) return; // type guard for TS
     ctx = canvas.getContext('2d'); // assume this succeeds; could add error handling
-    engine = new ParticleEngine({ max: 1200 }); // configurable max particles; tune for performance
+    engine = new ParticleEngine(); // configurable max particles now follows live display settings
     resize();
     engine.seedAmbient(25); // initial ambient particles; adds visual interest before interactions start
     // Expose engine for quick debugging in browser console

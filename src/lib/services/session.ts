@@ -10,6 +10,7 @@ import type {
 	SessionsOverviewResponse
 } from '$lib/shared/contracts';
 import { sessionConfig, sessionDetailPath } from '$lib/config/session';
+import { fetchOperatorAction } from '$lib/services/operator';
 import {
 	applySessionReset,
 	applySocketState,
@@ -63,21 +64,6 @@ declare global {
 
 let qrCodeLoader: Promise<QRCodeConstructor> | null = null;
 
-function loadSavedOperatorToken(): string {
-	if (typeof window === 'undefined') return '';
-	return window.localStorage.getItem(sessionConfig.storage.operatorTokenKey)?.trim() ?? '';
-}
-
-function saveOperatorToken(token: string): void {
-	if (typeof window === 'undefined') return;
-	window.localStorage.setItem(sessionConfig.storage.operatorTokenKey, token);
-}
-
-function clearOperatorToken(): void {
-	if (typeof window === 'undefined') return;
-	window.localStorage.removeItem(sessionConfig.storage.operatorTokenKey);
-}
-
 export function readSavedDisplayHost(): string {
 	if (typeof window === 'undefined') return '';
 	return window.localStorage.getItem(sessionConfig.storage.displayHostKey)?.trim() ?? '';
@@ -86,32 +72,6 @@ export function readSavedDisplayHost(): string {
 function saveDisplayHost(value: string): void {
 	if (typeof window === 'undefined') return;
 	window.localStorage.setItem(sessionConfig.storage.displayHostKey, value);
-}
-
-function ensureOperatorToken(): string {
-	const saved = loadSavedOperatorToken();
-	if (saved) {
-		return saved;
-	}
-
-	if (typeof window === 'undefined') {
-		return '';
-	}
-
-	const token = window.prompt('请输入 operator token 以管理场次。')?.trim() ?? '';
-	if (token) {
-		saveOperatorToken(token);
-	}
-	return token;
-}
-
-function createOperatorHeaders(headers?: HeadersInit): Headers {
-	const next = new Headers(headers);
-	const token = ensureOperatorToken();
-	if (token) {
-		next.set(sessionConfig.headers.operatorToken, token);
-	}
-	return next;
 }
 
 async function readApiError(response: Response, fallbackMessage: string): Promise<string> {
@@ -125,24 +85,6 @@ async function readApiError(response: Response, fallbackMessage: string): Promis
 	}
 
 	return fallbackMessage;
-}
-
-async function fetchOperatorAction(input: string, init: RequestInit, missingTokenMessage: string): Promise<Response> {
-	const headers = createOperatorHeaders(init.headers);
-	if (!headers.get(sessionConfig.headers.operatorToken)) {
-		return Promise.reject(new Error(missingTokenMessage));
-	}
-
-	const response = await fetch(input, {
-		...init,
-		headers
-	});
-
-	if (response.status === 401 || response.status === 403) {
-		clearOperatorToken();
-	}
-
-	return response;
 }
 
 async function buildQrDataUrl(url: string, size: number): Promise<string> {
@@ -235,6 +177,32 @@ function ensureQrCodeLibrary(): Promise<QRCodeConstructor> {
 export async function openDisplaySessionPanel(): Promise<void> {
 	openSessionPanel();
 	await loadSessionOverview();
+}
+
+export async function copyDisplayJoinUrl(): Promise<void> {
+	const url = displayState.sessionPanel.joinUrl;
+	if (!url || typeof window === 'undefined') {
+		return;
+	}
+
+	if (navigator.clipboard?.writeText) {
+		try {
+			await navigator.clipboard.writeText(url);
+			return;
+		} catch (error) {
+			void error;
+		}
+	}
+
+	window.prompt('Copy session URL', url);
+}
+
+function confirmDisplaySessionDelete(): boolean {
+	if (typeof window === 'undefined') {
+		return false;
+	}
+
+	return window.confirm('确认删除此历史记录？');
 }
 
 export async function regenerateJoinQr(): Promise<void> {
@@ -359,4 +327,12 @@ export async function deleteDisplaySession(id: string): Promise<void> {
 	} catch (error) {
 		setSessionPanelError(error instanceof Error ? error.message : 'Failed to delete session');
 	}
+}
+
+export async function deleteDisplaySessionWithConfirm(id: string): Promise<void> {
+	if (!confirmDisplaySessionDelete()) {
+		return;
+	}
+
+	await deleteDisplaySession(id);
 }

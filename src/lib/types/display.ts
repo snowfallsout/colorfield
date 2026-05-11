@@ -58,6 +58,11 @@ export type DisplaySessionPanelCopy = {
 	emptyHistory: string;
 };
 
+export type DisplaySessionCountRow = {
+	label: string;
+	count: number;
+};
+
 export type DisplaySessionPanelState = DisplaySessionPanelCopy & {
 	open: boolean;
 	loading: boolean;
@@ -69,6 +74,7 @@ export type DisplaySessionPanelState = DisplaySessionPanelCopy & {
 	joinQrDataUrl: string;
 	history: SessionSummary[];
 	selected: SessionRecord | null;
+	selectedCountRows: DisplaySessionCountRow[];
 };
 
 export type DisplayState = {

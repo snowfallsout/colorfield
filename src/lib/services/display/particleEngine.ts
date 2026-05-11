@@ -5,6 +5,7 @@
 */
 
 import { prewarmAll } from './sprite';
+import { displaySettings } from '$lib/settings/display';
 import { seedAmbient as seedDisplayAmbient, spawnMBTI as spawnDisplayMBTI, state } from './core';
 import type { RuntimeFacePoint, RuntimeParticle } from './types';
 
@@ -25,14 +26,14 @@ function detachParticle(particle: RuntimeParticle) {
 }
 
 export default class ParticleEngine {
-	private readonly max: number;
+	private readonly maxOverride?: number;
 
 	constructor(options: ParticleEngineOptions = {}) {
 		/*
 		  建立粒子引擎相容實例。
 		  @param options - 舊版 Canvas 元件傳入的設定，現在只使用 `max`。
 		*/
-		this.max = options.max ?? 1200;
+		this.maxOverride = options.max;
 		if (typeof document !== 'undefined') {
 			prewarmAll();
 		}
@@ -91,7 +92,8 @@ export default class ParticleEngine {
 	}
 
 	private trimOverflow() {
-		while (state.particles.length > this.max) {
+		const maxParticles = this.maxOverride ?? displaySettings.physics.maxParticles;
+		while (state.particles.length > maxParticles) {
 			const particle = state.particles.shift();
 			if (!particle) {
 				break;
