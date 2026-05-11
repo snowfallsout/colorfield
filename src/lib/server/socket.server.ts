@@ -1,7 +1,11 @@
+/*
+ * src/lib/server/socket.server.ts
+ * Purpose: Production-facing Socket.IO attach helper for Node-based runtime entrypoints.
+ */
 import { Server as IOServer } from 'socket.io';
 import type http from 'http';
-import type { ClientToServerEvents, ServerToClientEvents } from '$lib/shared/contracts';
-import { registerSocketServer } from '$lib/server/socket.shared';
+import type { ClientToServerEvents, ServerToClientEvents } from '../shared/contracts.js';
+import { registerSocketServer } from './socket.shared.js';
 
 /**
  * attachSocket(server)

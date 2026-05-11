@@ -27,7 +27,7 @@ import {
   setMobileImageUrl,
   setMobileLoading,
   setMobileScreen
-} from '$lib/state/mobile.svelte';
+} from '$lib/states/mobile.svelte';
 import { connect, disconnect, emit, on as socketOn } from '$lib/services/socket';
 import type { LuckyColorPayload } from '$lib/shared/contracts';
 

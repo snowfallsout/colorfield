@@ -1,33 +1,35 @@
 <!--
   SessionPanel.svelte
   Doc: Canonical display session manager backed by REST session APIs and the
-  shared display state store.
+  shared display state owner.
 -->
 
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { displayState } from '$lib/state/display.svelte';
+  import {
+    closeSessionPanel,
+    displayState,
+    setSessionDraftName,
+    setSessionHostInput
+  } from '$lib/states/display.svelte';
   import {
     createDisplaySession,
     deleteDisplaySession,
-    loadSessionOverview,
     regenerateJoinQr,
-    restoreSavedIp,
     viewDisplaySession
   } from '$lib/services/display/session';
 
-  onMount(() => {
-    restoreSavedIp();
-    void regenerateJoinQr();
-    void loadSessionOverview();
-  });
+  const selectedEntries = $derived.by(() =>
+    displayState.sessionPanel.selected
+      ? Object.entries(displayState.sessionPanel.selected.counts).sort((left, right) => right[1] - left[1])
+      : []
+  );
 
   function closePanel(): void {
-    displayState.closeSessionPanel();
+    closeSessionPanel();
   }
 
   function copyJoinUrl(): void {
-    const url = $displayState.sessionPanel.joinUrl;
+	const url = displayState.sessionPanel.joinUrl;
     if (!url) return;
     if (navigator.clipboard?.writeText) {
       navigator.clipboard.writeText(url).catch(() => {});
@@ -67,21 +69,21 @@
     </button>
     <div class="session-top">
       <div class="label">Session</div>
-      <div class="name">{$displayState.sessionName || '—'}</div>
+      <div class="name">{displayState.sessionLabel || '—'}</div>
       <div class="actions">
-        <button class="sp-btn" onclick={copyJoinUrl} title="Copy session link" disabled={!$displayState.sessionPanel.joinUrl}>Copy</button>
+    <button class="sp-btn" onclick={copyJoinUrl} title="Copy session link" disabled={!displayState.sessionPanel.joinUrl}>Copy</button>
       </div>
     </div>
 
-    <h2>{$displayState.sessionPanel.title}</h2>
+  <h2>{displayState.sessionPanel.title}</h2>
     <div class="sp-new">
       <input
-        placeholder={$displayState.sessionPanel.newSessionPlaceholder}
-        value={$displayState.sessionPanel.draftName}
-        oninput={(event) => displayState.setSessionDraftName((event.currentTarget as HTMLInputElement).value)}
+    placeholder={displayState.sessionPanel.newSessionPlaceholder}
+    value={displayState.sessionPanel.draftName}
+    oninput={(event) => setSessionDraftName((event.currentTarget as HTMLInputElement).value)}
       />
-      <button class="sp-btn" onclick={handleCreate} disabled={$displayState.sessionPanel.saving}>
-        {$displayState.sessionPanel.saving ? '处理中…' : $displayState.sessionPanel.newSessionButtonLabel}
+    <button class="sp-btn" onclick={handleCreate} disabled={displayState.sessionPanel.saving}>
+    {displayState.sessionPanel.saving ? '处理中…' : displayState.sessionPanel.newSessionButtonLabel}
       </button>
     </div>
 
@@ -89,31 +91,31 @@
       <div class="sp-qr-input-row">
         <input
           id="sp-ip-input"
-          placeholder={$displayState.sessionPanel.ipPlaceholder}
-          value={$displayState.sessionPanel.hostInput}
-          oninput={(event) => displayState.setSessionHostInput((event.currentTarget as HTMLInputElement).value)}
+      placeholder={displayState.sessionPanel.ipPlaceholder}
+      value={displayState.sessionPanel.hostInput}
+      oninput={(event) => setSessionHostInput((event.currentTarget as HTMLInputElement).value)}
         />
-        <button class="sp-btn" type="button" onclick={handleGenerateQr}>{$displayState.sessionPanel.generateQrButtonLabel}</button>
+    <button class="sp-btn" type="button" onclick={handleGenerateQr}>{displayState.sessionPanel.generateQrButtonLabel}</button>
       </div>
-      {#if $displayState.sessionPanel.joinQrDataUrl}
+    {#if displayState.sessionPanel.joinQrDataUrl}
         <div class="sp-qr-preview">
-          <img src={$displayState.sessionPanel.joinQrDataUrl} alt="Session join QR code" />
-          <div class="sp-qr-url">{$displayState.sessionPanel.joinUrl}</div>
-          <div class="sp-qr-hint">{$displayState.sessionPanel.qrHint}</div>
+      <img src={displayState.sessionPanel.joinQrDataUrl} alt="Session join QR code" />
+      <div class="sp-qr-url">{displayState.sessionPanel.joinUrl}</div>
+      <div class="sp-qr-hint">{displayState.sessionPanel.qrHint}</div>
         </div>
       {/if}
-      {#if $displayState.sessionPanel.error}
-        <div class="sp-error">{$displayState.sessionPanel.error}</div>
+    {#if displayState.sessionPanel.error}
+    <div class="sp-error">{displayState.sessionPanel.error}</div>
       {/if}
     </div>
 
-    <div id="sp-history-title">{$displayState.sessionPanel.historyTitle}</div>
+  <div id="sp-history-title">{displayState.sessionPanel.historyTitle}</div>
     <div id="sp-history-list">
-      {#if $displayState.sessionPanel.loading}
+    {#if displayState.sessionPanel.loading}
         <div class="sp-empty">读取中…</div>
-      {:else if $displayState.sessionPanel.history.length}
+    {:else if displayState.sessionPanel.history.length}
         <ul>
-          {#each $displayState.sessionPanel.history as item}
+      {#each displayState.sessionPanel.history as item (item.id)}
             <li>
               <div class="sp-row">
                 <div class="sp-row-info">
@@ -129,20 +131,20 @@
           {/each}
         </ul>
       {:else}
-        <div class="sp-empty">{$displayState.sessionPanel.emptyHistory}</div>
+		<div class="sp-empty">{displayState.sessionPanel.emptyHistory}</div>
       {/if}
     </div>
 
-    {#if $displayState.sessionPanel.selected}
+	{#if displayState.sessionPanel.selected}
       <div class="sp-detail">
-        <div class="sp-detail-title">{$displayState.sessionPanel.selected.name}</div>
+		<div class="sp-detail-title">{displayState.sessionPanel.selected.name}</div>
         <div class="sp-detail-meta">
-          创建：{new Date($displayState.sessionPanel.selected.createdAt).toLocaleString()}<br>
-          总人数：{$displayState.sessionPanel.selected.total}
+		  创建：{new Date(displayState.sessionPanel.selected.createdAt).toLocaleString()}<br>
+		  总人数：{displayState.sessionPanel.selected.total}
         </div>
-        {#if Object.keys($displayState.sessionPanel.selected.counts).length}
+		{#if selectedEntries.length}
           <ul class="sp-detail-counts">
-            {#each Object.entries($displayState.sessionPanel.selected.counts).sort((left, right) => right[1] - left[1]) as [mbti, count]}
+			{#each selectedEntries as [mbti, count] (mbti)}
               <li>{mbti}: {count}</li>
             {/each}
           </ul>

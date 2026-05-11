@@ -13,10 +13,10 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import ParticleEngine from '$lib/services/display/particleEngine';
-  import { popSpawn } from '$lib/state/particles.svelte';
-  import { media } from '$lib/state/media.svelte';
-  import { ui } from '$lib/state/ui.svelte';
-  import { connect as socketConnect } from '$lib/services/socket';
+  import { bindRealtimeSocket } from '$lib/services/display/realtime';
+  import { popSpawn } from '$lib/states/particles.svelte';
+  import { media } from '$lib/states/media.svelte';
+  import { ui } from '$lib/states/ui.svelte';
 
   let canvas = $state<HTMLCanvasElement | null>(null);
   let ctx = $state<CanvasRenderingContext2D | null>(null);
@@ -170,8 +170,8 @@
 
     // subscribe runes for interaction mapping
     window.addEventListener('resize', resize);
-    // connect socket (client-only)
-    socketConnect();
+    // connect socket and bind display-side realtime fan-out once per page.
+    bindRealtimeSocket();
 
     loop();
 

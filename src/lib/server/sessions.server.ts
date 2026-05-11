@@ -5,7 +5,8 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { serverConfig } from '$lib/config/server';
+import { MBTI_ORDER } from '../shared/constants/mbti.js';
+import { serverConfig } from '../config/server.js';
 
 export type Session = {
   id: string;
@@ -23,6 +24,7 @@ type SessionFile = Session & {
 const SESSIONS_DIR = serverConfig.sessionsDir;
 const SESSION_FILE_PREFIX = serverConfig.sessionFilePrefix;
 const SESSION_FILE_RE = new RegExp(`^${SESSION_FILE_PREFIX}.+\\.json$`, 'i');
+const VALID_MBTI_KEYS = new Set<string>(MBTI_ORDER);
 
 function ensureSessionsDir(): void {
   fs.mkdirSync(SESSIONS_DIR, { recursive: true });
@@ -30,6 +32,72 @@ function ensureSessionsDir(): void {
 
 function sessionFilePath(id: string): string {
   return path.join(SESSIONS_DIR, `${SESSION_FILE_PREFIX}${id}.json`);
+}
+
+function tempSessionFilePath(id: string): string {
+  return `${sessionFilePath(id)}.${process.pid}.${Date.now()}.tmp`;
+}
+
+function totalFromCounts(counts: Record<string, number>): number {
+  return Object.values(counts).reduce((sum, value) => sum + value, 0);
+}
+
+function sanitizeCounts(counts: unknown): Record<string, number> {
+  if (!counts || typeof counts !== 'object') {
+    return {};
+  }
+
+  const next: Record<string, number> = {};
+  for (const [key, rawValue] of Object.entries(counts)) {
+    if (!VALID_MBTI_KEYS.has(key)) {
+      continue;
+    }
+
+    const value = typeof rawValue === 'number' ? rawValue : Number(rawValue);
+    if (!Number.isFinite(value) || value <= 0) {
+      continue;
+    }
+
+    next[key] = Math.floor(value);
+  }
+
+  return next;
+}
+
+function normalizeMbtiKey(value: string): string | null {
+  const normalized = value.trim().toUpperCase();
+  return VALID_MBTI_KEYS.has(normalized) ? normalized : null;
+}
+
+function normalizeSessionFile(value: unknown): SessionFile | null {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const session = value as Partial<SessionFile> & { counts?: unknown };
+  if (
+    typeof session.id !== 'string' ||
+    typeof session.name !== 'string' ||
+    typeof session.createdAt !== 'string'
+  ) {
+    return null;
+  }
+
+  const counts = sanitizeCounts(session.counts);
+  const total =
+    typeof session.total === 'number' && Number.isFinite(session.total) && session.total >= 0
+      ? Math.max(Math.floor(session.total), totalFromCounts(counts))
+      : totalFromCounts(counts);
+
+  return {
+    id: session.id,
+    name: session.name.trim() || serverConfig.defaultSessionName,
+    createdAt: session.createdAt,
+    archivedAt: typeof session.archivedAt === 'string' ? session.archivedAt : undefined,
+    counts,
+    total,
+    active: session.active === true
+  };
 }
 
 function sortSessionsNewestFirst(left: SessionFile, right: SessionFile): number {
@@ -41,9 +109,10 @@ function sortSessionsNewestFirst(left: SessionFile, right: SessionFile): number 
 function createSessionRecord(name?: string): SessionFile {
   const now = new Date().toISOString();
   const id = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+  const normalizedName = name?.trim() || `Session ${new Date(now).toLocaleDateString('zh-TW')}`;
   return {
     id,
-    name: name?.trim() || `Session ${new Date(now).toLocaleDateString('zh-TW')}`,
+    name: normalizedName,
     createdAt: now,
     counts: {},
     total: 0,
@@ -53,13 +122,32 @@ function createSessionRecord(name?: string): SessionFile {
 
 function persistSession(session: SessionFile): void {
   ensureSessionsDir();
-  fs.writeFileSync(sessionFilePath(session.id), JSON.stringify(session, null, 2), 'utf8');
+  const normalizedSession = normalizeSessionFile(session);
+  if (!normalizedSession) {
+    throw new Error(`Refusing to persist invalid session record: ${session.id}`);
+  }
+	const targetPath = sessionFilePath(session.id);
+	const tempPath = tempSessionFilePath(session.id);
+  const payload = JSON.stringify(normalizedSession, null, 2);
+
+	try {
+		fs.writeFileSync(tempPath, payload, 'utf8');
+		fs.renameSync(tempPath, targetPath);
+	} catch (error) {
+		try {
+			fs.unlinkSync(tempPath);
+		} catch (cleanupError) {
+			void cleanupError;
+		}
+		throw error;
+	}
 }
 
 function readSession(filePath: string): SessionFile | null {
   try {
     const raw = fs.readFileSync(filePath, 'utf8');
-    return JSON.parse(raw) as SessionFile;
+		const parsed = JSON.parse(raw) as unknown;
+		return normalizeSessionFile(parsed);
   } catch (error) {
     console.warn('Failed to read session file:', filePath, error);
     return null;
@@ -194,8 +282,17 @@ export function incrementCount(mbti: string): { counts: Record<string, number>; 
     return { counts: {}, total: 0, session: null };
   }
 
+	const mbtiKey = normalizeMbtiKey(mbti);
+	if (!mbtiKey) {
+		return {
+			counts: { ...active.counts },
+			total: active.total,
+			session: active
+		};
+	}
+
   const nextCounts = { ...active.counts };
-  nextCounts[mbti] = (nextCounts[mbti] || 0) + 1;
+  nextCounts[mbtiKey] = (nextCounts[mbtiKey] || 0) + 1;
   const nextSession: SessionFile = {
     ...active,
     counts: nextCounts,

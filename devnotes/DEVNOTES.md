@@ -6,7 +6,7 @@ under `devnotes/DEVNOTES_{timestamp}.md` and reference it here.
 
 # DEVNOTES — Current
 
-Last snapshot: [DEVNOTES_2026-05-07T170733Z.md](DEVNOTES_2026-05-07T170733Z.md)
+Last snapshot: [DEVNOTES_2026-05-10T204806Z.md](DEVNOTES_2026-05-10T204806Z.md)
 
 Policy (short):
 
@@ -21,6 +21,14 @@ Snapshot created to preserve current state before proceeding with repo-wide chan
 
 Recent activity (delta):
 
+- 2026-05-10: Added [DEVNOTES_2026-05-10T204806Z.md](DEVNOTES_2026-05-10T204806Z.md) recording the display-side convergence onto a Svelte 5 rune owner, a display-local realtime service, and a new display type hub under `src/lib/types/`.
+- 2026-05-10: Added [DEVNOTES_2026-05-10T201901Z.md](DEVNOTES_2026-05-10T201901Z.md) recording the saved-host state seeding move out of `session.ts` and into the display page.
+- 2026-05-10: Added [DEVNOTES_2026-05-10T201626Z.md](DEVNOTES_2026-05-10T201626Z.md) recording the `/lib` config cleanup that removed dead session config keys.
+- 2026-05-10: Added [DEVNOTES_2026-05-10T194856Z.md](DEVNOTES_2026-05-10T194856Z.md) recording the removal of the dead display runtime module and the unused DOM-only session flows tied to it.
+- 2026-05-10: Added [DEVNOTES_2026-05-10T194115Z.md](DEVNOTES_2026-05-10T194115Z.md) recording the operator-token guard for session mutations and the first display legacy-bridge cleanup slice.
+- 2026-05-10: Added [DEVNOTES_2026-05-10T192504Z.md](DEVNOTES_2026-05-10T192504Z.md) recording the server-side hardening pass: atomic session writes, persisted count sanitization, and MBTI payload validation in the shared socket owner.
+- 2026-05-09: Added [DEVNOTES_2026-05-09T091248Z.md](DEVNOTES_2026-05-09T091248Z.md) recording the deletion of the unused `state/session.svelte.ts` module after confirming it had no live readers.
+- 2026-05-09: Added [DEVNOTES_2026-05-09T091123Z.md](DEVNOTES_2026-05-09T091123Z.md) recording the extraction of session API paths, storage keys, join route, and QR asset URL into `src/lib/config/session.ts`.
 - 2026-05-07: Added [DEVNOTES_2026-05-07T170733Z.md](DEVNOTES_2026-05-07T170733Z.md) recording the new server-only config owner for filesystem-backed session persistence.
 - 2026-05-07: Added [DEVNOTES_2026-05-07T165910Z.md](DEVNOTES_2026-05-07T165910Z.md) recording the runtime settings split into domain modules and the migration of live camera/MediaPipe tuning values out of the monolithic `settings.ts` file.
 
@@ -94,5 +102,8 @@ Next planned actions:
 - Keep `utils/pool.ts` and `utils/sprites.ts` until the display particle engine is rehomed off the legacy utility path.
 - Keep active source branding aligned with `InkLumina` while leaving protected static reference files untouched unless explicitly authorized.
 - Keep mobile helper ownership aligned with `services/mobile` and `state/` so import paths stay consistent after file moves.
-- Keep internal identifiers generic unless the name itself must be user-visible plain text. <!-- End of current DEVNOTES index -->
+- Keep internal identifiers generic unless the name itself must be user-visible plain text.
+<!-- End of current DEVNOTES index -->
+<!-- EOF -->
+<!-- Final line -->
 

@@ -2,7 +2,7 @@
  * src/lib/runes/mbti.svelte.ts
  * Purpose: Track MBTI counts and emit particle spawn events for display.
  */
-import { pushSpawn } from '$lib/state/particles.svelte';
+import { pushSpawn } from '$lib/states/particles.svelte';
 
 // Reactive MBTI count state
 export const mbti = $state({

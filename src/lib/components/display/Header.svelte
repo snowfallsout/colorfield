@@ -1,9 +1,15 @@
+<!--
+  Header.svelte
+  Doc: Top-center display title header bound to the canonical display state.
+-->
+
 <script lang="ts">
+	import { displayState } from '$lib/states/display.svelte';
 </script>
 
 <div class="display-header">
-	<h1>InkLumina</h1>
-	<p>MBTI · Emotion · Particle Art</p>
+	<h1>{displayState.header.title}</h1>
+	<p>{displayState.header.subtitle}</p>
 </div>
 
 <style>

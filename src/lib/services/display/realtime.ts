@@ -1,6 +1,6 @@
 /*
  * src/lib/services/display/realtime.ts
- * Purpose: Canonical display-service owner for realtime socket binding and session reset synchronization.
+ * Purpose: Canonical display-service owner for binding shared socket events into display-specific state and queues.
  */
 import type {
 	DisplayStatePayload,
@@ -8,61 +8,57 @@ import type {
 	SessionResetPayload,
 	SpawnParticlesPayload
 } from '$lib/shared/contracts';
-import { createSocket, type Socket } from '$lib/shared/socket-client';
-import { displayState } from '$lib/state/display.svelte';
-import {
-	registerDisplayLegacyBridge,
-	setSessionName,
-	startDisplayLegacyRuntime,
-	syncLegacyBridge
-} from '$lib/services/display/legacy';
-import type { DisplayLegacyWindow } from '$lib/services/display/legacy';
-import { spawnMBTI, state } from '$lib/services/display/core';
+import { MBTI_PALETTES } from '$lib/shared/constants/mbti';
+import { connect, on } from '$lib/services/socket';
+import { pushSpawn } from '$lib/states/particles.svelte';
+import { showToast } from '$lib/states/ui.svelte';
+import { applySessionReset, applySocketState, applySpawnParticles } from '$lib/states/display.svelte';
+import { registerDisplayLegacyBridge, startDisplayLegacyRuntime, syncLegacyBridge } from '$lib/services/display/legacy';
 
-// Bind the shared display socket once and fan payloads into state/runtime owners.
+let realtimeBound = false;
+
+function resolveSpawnColor(payload: SpawnParticlesPayload): string | undefined {
+	const mbtiKey = (payload.mbti || '').toUpperCase();
+	const palette = MBTI_PALETTES[mbtiKey as keyof typeof MBTI_PALETTES];
+	return payload.color ?? palette?.mid ?? palette?.core;
+}
+
 export function bindRealtimeSocket(): void {
-	if (!state.socket) {
-		state.socket = createSocket();
-	}
-
-	if (state.socketBound) {
+	if (realtimeBound) {
 		return;
 	}
 
-	state.socketBound = true;
-	const socket = state.socket as Socket;
-	socket.on('state', (payload: DisplayStatePayload) => {
-		displayState.applySocketState(payload);
-		if (payload.session) {
-			setSessionName(payload.session.name);
-		}
+	const socket = connect();
+	if (!socket) {
+		return;
+	}
+
+	realtimeBound = true;
+
+	on('state', (payload: DisplayStatePayload) => {
+		applySocketState(payload);
 	});
-	socket.on('spawn_particles', (payload: SpawnParticlesPayload) => {
-		displayState.applySpawnParticles(payload);
-		spawnMBTI(payload.mbti, payload.color);
-		if (payload.session) {
-			setSessionName(payload.session.name);
-		}
+
+	on('spawn_particles', (payload: SpawnParticlesPayload) => {
+		const mbti = (payload.mbti || '').toUpperCase();
+		pushSpawn({
+			mbti,
+			color: resolveSpawnColor(payload),
+			nickname: payload.nickname ?? undefined,
+			counts: payload.counts,
+			total: payload.total
+		});
+		applySpawnParticles(payload);
+		showToast(`✦ ${mbti} ${payload.nickname || ''} joined`, payload.color || '#ffffff');
 	});
-	socket.on('session_reset', (payload: SessionResetPayload) => {
-		const keepAmbient = state.particles.filter((particle) => particle.mbti === null);
-		state.particles.splice(0, state.particles.length, ...keepAmbient);
-		for (const key of Object.keys(state.mbtiParticles) as Array<keyof typeof state.mbtiParticles>) {
-			delete state.mbtiParticles[key];
-		}
-		displayState.applySessionReset(payload);
-		setSessionName(payload.session.name);
-		const legacyWindow = window as DisplayLegacyWindow;
-		const counts = legacyWindow.mbtiCounts ?? {};
-		for (const key of Object.keys(counts)) delete counts[key];
-		legacyWindow.mbtiCounts = counts;
-		legacyWindow.renderLegend?.();
+
+	on('session_reset', (payload: SessionResetPayload) => {
+		applySessionReset(payload);
+		showToast('✦ 新场次已开始', '#ffffff');
 	});
-	socket.on('lucky_color', (_payload: LuckyColorPayload) => {
+
+	on('lucky_color', (_payload: LuckyColorPayload) => {
 		// display does not currently render the lucky-color payload directly.
-	});
-	socket.on('disconnect', () => {
-		void 0;
 	});
 }
 

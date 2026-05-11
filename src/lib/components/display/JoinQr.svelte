@@ -7,17 +7,17 @@
 -->
 
 <script lang="ts">
-  import { displayState } from '$lib/state/display.svelte';
+  import { displayState } from '$lib/states/display.svelte';
 </script>
 
 <div class="joinqr-box">
-  {#if $displayState.sessionPanel.joinQrDataUrl}
-    <img class="joinqr" alt="Join QR code" src={$displayState.sessionPanel.joinQrDataUrl} />
+  {#if displayState.sessionPanel.joinQrDataUrl}
+    <img class="joinqr" alt="Join QR code" src={displayState.sessionPanel.joinQrDataUrl} />
   {:else}
     <div class="joinqr placeholder" aria-hidden="true"></div>
   {/if}
-  <div class="joinqr-url">{$displayState.sessionPanel.joinUrl}</div>
-  <div class="joinqr-hint">{$displayState.footer.qrHintLines[0]}<br>{$displayState.footer.qrHintLines[1]}</div>
+  <div class="joinqr-url">{displayState.sessionPanel.joinUrl}</div>
+  <div class="joinqr-hint">{displayState.footer.qrHintLines[0]}<br>{displayState.footer.qrHintLines[1]}</div>
 </div>
 
 <style>

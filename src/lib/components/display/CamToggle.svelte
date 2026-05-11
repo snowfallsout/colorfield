@@ -4,9 +4,9 @@
 -->
 
 <script lang="ts">
-  import { media, initCamera, stopCamera, preloadCamera } from '$lib/state/media.svelte';
-  import { ui, toggleWaterOverlay } from '$lib/state/ui.svelte';
-  import { onMount, onDestroy } from 'svelte';
+  import { media, initCamera, stopCamera, preloadCamera } from '$lib/states/media.svelte';
+  import { ui, toggleWaterOverlay } from '$lib/states/ui.svelte';
+  import { onMount } from 'svelte';
   
   // derived UI state: prefer inspecting the actual video element's stream
   const camActive = $derived.by(() => {
@@ -39,25 +39,13 @@
     toggleWaterOverlay();
   }
 
-  // Expose a global toggle for legacy scripts that call `toggleCamera()`
   onMount(() => {
-    if (typeof window !== 'undefined') {
-      (window as any).toggleCamera = toggleCamera;
-      (window as any).toggleWaterOverlay = toggleWaterOverlayWhenReady;
-    }
     void preloadCamera();
-  });
-  onDestroy(() => {
-    if (typeof window !== 'undefined') {
-      if ((window as any).toggleCamera === toggleCamera) delete (window as any).toggleCamera;
-      if ((window as any).toggleWaterOverlay === toggleWaterOverlayWhenReady) delete (window as any).toggleWaterOverlay;
-    }
   });
 </script>
 
 <div class="cam-toggle-wrap">
   <button
-    id="cam-toggle"
     type="button"
     class="btn-toggle cam-toggle"
     class:on={camActive}
@@ -73,7 +61,7 @@
     {/if}
   </button>
 
-  <button id="overlay-toggle" type="button" class="btn-toggle overlay-toggle" class:on={ui.waterOverlay} onclick={toggleWaterOverlayWhenReady} disabled={!camActive || media.camLoading} aria-disabled={!camActive || media.camLoading}>
+  <button type="button" class="btn-toggle overlay-toggle" class:on={ui.waterOverlay} onclick={toggleWaterOverlayWhenReady} disabled={!camActive || media.camLoading} aria-disabled={!camActive || media.camLoading}>
     { ui.waterOverlay ? '水幕 OFF' : '水幕 ON' }
   </button>
 

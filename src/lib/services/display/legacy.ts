@@ -1,8 +1,8 @@
 /*
  * src/lib/services/display/legacy.ts
- * Purpose: Canonical display-service owner for legacy window bridge helpers used by the runtime.
+ * Purpose: Canonical display-service owner for legacy window bridge helpers used by compatibility runtime paths.
  */
-import { displayState } from '$lib/state/display.svelte';
+import { setLegendCounts, setSessionName as setDisplaySessionName } from '$lib/states/display.svelte';
 import { seedAmbient } from '$lib/services/display/core';
 import type { RuntimeConstructor, RuntimeDetector } from '$lib/services/display/types';
 
@@ -19,32 +19,20 @@ export type DisplayLegacyWindow = Window & typeof globalThis & {
 	Hands?: RuntimeConstructor<RuntimeDetector>;
 };
 
-// Sync the legacy static DOM legend with the current MBTI counts snapshot.
+function totalFromCounts(counts: Record<string, number>): number {
+	return Object.values(counts).reduce((sum, count) => sum + Number(count || 0), 0);
+}
+
 export function updateLegendFromCounts(counts: Record<string, number>): void {
-	const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
-	const totalElement = document.getElementById('total-num');
-	if (totalElement) totalElement.textContent = `${total}`;
-	for (const key of Object.keys(counts)) {
-		const count = counts[key] || 0;
-		const percent = total > 0 ? (count / total) * 100 : 0;
-		document.getElementById(`r-${key}`)?.classList.toggle('on', count > 0);
-		const fill = document.getElementById(`f-${key}`) as HTMLDivElement | null;
-		const countElement = document.getElementById(`c-${key}`);
-		if (fill) fill.style.width = `${percent}%`;
-		if (countElement) countElement.textContent = `${count}`;
-	}
+// Mirror legacy legend pushes into the Svelte display state instead of direct DOM mutation.
+	setLegendCounts(counts, totalFromCounts(counts));
 }
 
-// Mirror the active session name into the legacy display header area.
 export function setSessionName(name: string): void {
-	const element = document.getElementById('session-name');
-	if (!element) return;
-	element.textContent = name ? `— ${name} —` : '';
+	setDisplaySessionName(name);
 }
 
-// Attach no-op globals and DOM updaters expected by legacy runtime code paths.
-export function syncLegacyBridge(): void {
-	const legacyWindow = window as DisplayLegacyWindow;
+function attachLegacyBridge(legacyWindow: DisplayLegacyWindow): void {
 	legacyWindow.renderLegend = () => {
 		const counts = legacyWindow.mbtiCounts ?? {};
 		updateLegendFromCounts(counts);
@@ -57,18 +45,14 @@ export function syncLegacyBridge(): void {
 	legacyWindow.mbtiCounts = legacyWindow.mbtiCounts ?? {};
 }
 
-// Rebind legacy session name updates so they flow through the Svelte display state owner.
+export function syncLegacyBridge(): void {
+	const legacyWindow = window as DisplayLegacyWindow;
+	attachLegacyBridge(legacyWindow);
+}
+
 export function registerDisplayLegacyBridge(): void {
 	const legacyWindow = window as DisplayLegacyWindow;
-
-	legacyWindow.renderLegend = () => {
-		const counts = legacyWindow.mbtiCounts ?? {};
-		updateLegendFromCounts(counts);
-	};
-
-	legacyWindow.setSessionName = (name: string) => {
-		displayState.setSessionName(name ? `— ${name} —` : '');
-	};
+	attachLegacyBridge(legacyWindow);
 }
 
 // Kick off the legacy requestAnimationFrame/camera loop once per page lifetime.

@@ -6,7 +6,7 @@
 // file-level: Svelte rune for media state and helpers (typed)
 import { browser } from '$app/environment';
 import { visionSettings } from '$lib/settings/vision';
-import { setHandBadge } from '$lib/state/ui.svelte';
+import { setHandBadge } from '$lib/states/ui.svelte';
 import { preload as mediapipePreload, start as mediapipeStart, stop as mediapipeStop } from '$lib/services/mediapipe';
 
 export type CrowdMember = {

@@ -5,9 +5,9 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
-		"build": "vite build",
+		"build": "vite build && tsc -p ./tsconfig.socket.json",
 		"prestart": "npm run build",
-		"start": "node build",
+		"start": "node scripts/production-server.mjs",
 		"start:localhost": "node scripts/run-localhost.mjs",
 		"release:localhost": "node scripts/run-localhost.mjs",
 		"preview": "svelte-kit preview",

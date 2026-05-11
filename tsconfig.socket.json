@@ -1,0 +1,20 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"rootDir": "./src/lib",
+		"outDir": "./build/socket",
+		"allowJs": false,
+		"checkJs": false,
+		"declaration": false,
+		"noEmit": false,
+		"sourceMap": false
+	},
+	"include": [
+		"src/lib/config/server.ts",
+		"src/lib/server/sessions.server.ts",
+		"src/lib/server/socket.server.ts",
+		"src/lib/server/socket.shared.ts",
+		"src/lib/shared/constants/mbti.ts",
+		"src/lib/shared/contracts.ts"
+	]
+}

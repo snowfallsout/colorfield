@@ -2,60 +2,27 @@
   Legend.svelte
   Doc: Visual legend showing MBTI counts and totals.
   Notation:
-    - Reads `mbtiCounts` and `total` from `$lib/runes/mbti` (counts are simple integers)
-    - Presentation-only; generates simple colors deterministically from MBTI key.
+    - Reads pre-shaped legend rows from the canonical display state owner.
+    - Keeps the component presentation-only; all legend derivation now lives in `states/display.svelte.ts`.
 -->
 
 <script lang="ts">
-  import { mbti, getTotal } from '$lib/state/mbti.svelte';
-  import { MBTI_ORDER, MBTI_PALETTES } from '$lib/shared/constants/mbti';
-
-  type MbtiKey = keyof typeof MBTI_PALETTES;
-  type Entry = { k: MbtiKey; v: number; pct: number };
-  let total = $derived.by(() => getTotal());
-
-  /*
-    colorFor(key)
-    - Deterministically generate a pleasant color hex from a short key string.
-    - Lightweight fallback when no explicit palette is available.
-  */
-  function colorFor(key: unknown) {
-    const sKey = String(key);
-    const seed = Array.from(sKey).reduce((s, c) => s + c.charCodeAt(0), 0);
-    const r = (seed * 137) % 200 + 30;
-    const g = (seed * 61) % 200 + 30;
-    const b = (seed * 29) % 200 + 30;
-    return `rgb(${r}, ${g}, ${b})`;
-  }
-
-  // Derive a list of all MBTI types (preserve MBTI_ORDER), include zero-counts
-  let entries = $derived.by((): Entry[] => MBTI_ORDER.map((k: unknown) => {
-    const key = String(k) as MbtiKey;
-    const counts = mbti.counts as Record<string, number>;
-    const v = counts[String(key)] ? counts[String(key)] : 0;
-    return { k: key, v, pct: total ? v / total : 0 };
-  }));
-
-  // Determine the currently-most-participating MBTI (top) for glow/hover color
-  let top = $derived.by(() => {
-    const fallback: Entry = { k: MBTI_ORDER[0], v: 0, pct: 0 };
-    return entries.reduce((best: Entry, it: Entry) => (it.v > best.v ? it : best), entries[0] ?? fallback);
-  });
+  import { displayState } from '$lib/states/display.svelte';
 </script>
-<aside class="legend" style="--glow: {top.k ? (MBTI_PALETTES[top.k]?.mid || colorFor(top.k)) : 'transparent'}">
-  <h3 class="legend-title">Present</h3>
+<aside class="legend" style="--glow: {displayState.legend.glowColor}">
+  <h3 class="legend-title">{displayState.legend.title}</h3>
   <div class="legend-rows">
-    {#if entries.length === 0}
-      <div class="row empty">No participants yet</div>
+    {#if displayState.total < 1}
+      <div class="row empty">{displayState.legend.emptyLabel}</div>
     {/if}
-    {#each entries as item}
-      <div class="row" class:on={item.v > 0} class:top={item.k === top.k}>
-        <div class="dot" style="--c: {MBTI_PALETTES[item.k]?.mid || colorFor(item.k)}; background: {MBTI_PALETTES[item.k]?.mid || colorFor(item.k)}"></div>
-        <div class="lbl">{item.k}</div>
+    {#each displayState.legend.rows as item (item.label)}
+      <div class="row" class:on={item.active} class:top={item.top}>
+        <div class="dot" style="--c: {item.color}; background: {item.color}"></div>
+        <div class="lbl">{item.label}</div>
         <div class="track">
-          <div class="fill" style="width: {total ? Math.round(item.pct * 100) + '%' : '0%'}; background: {colorFor(item.k)}"></div>
+          <div class="fill" style="width: {Math.round(item.fillPercent)}%; background: {item.color}"></div>
         </div>
-        <div class="cnt">{item.v}</div>
+        <div class="cnt">{item.count}</div>
       </div>
     {/each}
   </div>

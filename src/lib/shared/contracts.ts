@@ -32,6 +32,11 @@ export type DeleteSessionResponse = {
   ok: boolean;
 };
 
+export type ApiErrorResponse = {
+  ok: false;
+  error: string;
+};
+
 export type MbtiInitPayload = {
   order: readonly MBTIKey[];
   palettes: Record<MBTIKey, Palette>;

@@ -4,12 +4,12 @@
  * persistence without mixing deployment concerns into runtime tuning modules.
  */
 import path from 'node:path';
-import { env } from '$env/dynamic/private';
 
 export type ServerConfig = {
 	sessionsDir: string;
 	sessionFilePrefix: string;
 	defaultSessionName: string;
+	operatorToken: string;
 };
 
 function normalizeOptionalValue(value: string | undefined): string | undefined {
@@ -23,9 +23,10 @@ function resolveSessionsDir(value: string | undefined): string {
 }
 
 export const serverConfig: ServerConfig = {
-	sessionsDir: resolveSessionsDir(env.INKLUMINA_SESSIONS_DIR),
+	sessionsDir: resolveSessionsDir(process.env.INKLUMINA_SESSIONS_DIR),
 	sessionFilePrefix: 'session_',
-	defaultSessionName: 'InkLumina Session'
+	defaultSessionName: 'InkLumina Session',
+	operatorToken: normalizeOptionalValue(process.env.INKLUMINA_OPERATOR_TOKEN) ?? ''
 };
 
 export default serverConfig;
