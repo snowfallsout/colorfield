@@ -6,7 +6,7 @@ under `../.devnotes/DEVNOTES_{timestamp}.md` and reference it here.
 
 # DEVNOTES — Current
 
-Last snapshot: [DEVNOTES_2026-05-11T072738Z.md](../.devnotes/DEVNOTES_2026-05-11T072738Z.md)
+Last snapshot: [DEVNOTES_2026-05-11T192507Z.md](../.devnotes/DEVNOTES_2026-05-11T192507Z.md)
 
 Policy (short):
 
@@ -20,6 +20,8 @@ Snapshot created to preserve current state before proceeding with repo-wide chan
 ---
 
 Recent activity (delta):
+
+- 2026-05-11: Added [DEVNOTES_2026-05-11T192507Z.md](../.devnotes/DEVNOTES_2026-05-11T192507Z.md) recording the architecture-manual refresh: current `src/lib` ownership, `data/` and `.devnotes/` coverage, and the replacement of stale template references to removed HTML/runtime paths.
 
 - 2026-05-11: Added [DEVNOTES_2026-05-11T072738Z.md](../.devnotes/DEVNOTES_2026-05-11T072738Z.md) recording the new top-level control route, the persisted control profile, the live runtime-settings refactor, and the route-hub update.
 
