@@ -4,7 +4,7 @@
  */
 import { browser } from '$app/environment';
 import { publicConfig } from '$lib/config/public';
-import { createSocket, type Socket } from '$lib/shared/socket-client';
+import { createSocket, type Socket } from '$lib/services/socket-client';
 import type {
   ClientToServerEvents,
   ServerToClientEvents

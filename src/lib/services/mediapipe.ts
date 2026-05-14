@@ -11,7 +11,7 @@
 
 import { browser } from '$app/environment';
 import { visionSettings } from '$lib/settings/vision';
-import type { CrowdMember, InteractionPoint } from '$lib/states/media.svelte';
+import type { CrowdMember, InteractionPoint } from '$lib/types/media';
 
 type FaceMeshLike = {
   setOptions: (opts: Record<string, unknown>) => void;

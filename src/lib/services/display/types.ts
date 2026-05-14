@@ -2,7 +2,7 @@
  * src/lib/services/display/types.ts
  * Purpose: Canonical display-service runtime type owner for the display particle/camera runtime.
  */
-import type { Socket } from '$lib/shared/socket-client';
+import type { Socket } from '$lib/services/socket-client';
 
 export interface DisplayLegendRowSample {
 	color: string;

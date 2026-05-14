@@ -20,7 +20,7 @@ InkLumina 是一個以 **SvelteKit + TypeScript + Vite** 建置的現場互動�
 
 - **正式 Web App**：SvelteKit routes 與 `src/lib/components/*`。
 - **即時同步層**：`src/lib/shared/contracts.ts`、`src/lib/services/socket.ts`、`src/lib/server/socket.shared.ts`。
-- **資料持久層**：`data/sessions/*.json` 與 `data/control/control-profile.json`。
+- **資料持久層**：`data/sessions/*.json` 與首次保存 control profile 時才建立的 `data/control/control-profile.json`。
 - **啟動與建置層**：`scripts/`、`build/`、Windows/macOS launcher。
 - **靜態參考頁**：`static/entryMotion.html`，作為獨立互動示範，不是主要 app route。
 
@@ -42,13 +42,12 @@ inklumina/
 │   ├── server/
 │   └── socket/
 ├── data/                  # runtime persistence 資料
-│   ├── control/
+│   ├── control/           # 首次保存 control profile 時 lazy-create
 │   │   └── control-profile.json
 │   └── sessions/
 │       ├── session_*.json
 │       └── ...
 ├── devnotes/              # 長文架構文件、補充說明與人工整理的技術文檔
-│   ├── ARCHITECTURE.md
 │   └── DEVNOTES.md
 ├── prompts/               # prompt 資產、模板與測試資料
 │   ├── AGENTS.md
@@ -110,6 +109,7 @@ inklumina/
 │   │   │   ├── mediapipe.ts
 │   │   │   ├── operator.ts
 │   │   │   ├── session.ts
+│   │   │   ├── socket-client.ts
 │   │   │   └── socket.ts
 │   │   ├── settings/
 │   │   │   ├── display.ts
@@ -121,8 +121,7 @@ inklumina/
 │   │   │   ├── constants/
 │   │   │   │   ├── mbti.ts
 │   │   │   │   └── vision.ts
-│   │   │   ├── contracts.ts
-│   │   │   └── socket-client.ts
+│   │   │   └── contracts.ts
 │   │   ├── states/
 │   │   │   ├── control.svelte.ts
 │   │   │   ├── display.svelte.ts
@@ -139,6 +138,7 @@ inklumina/
 │   │   │   ├── control.ts
 │   │   │   ├── display.ts
 │   │   │   ├── index.d.ts
+│   │   │   ├── media.ts
 │   │   │   └── mobile.d.ts
 │   │   ├── utils/        # 目前為空，保留作 legacy cleanup 緩衝區
 │   │   └── index.ts
@@ -165,7 +165,9 @@ inklumina/
 ├── static/                # 保留的靜態資產與獨立示範頁
 │   ├── entryMotion.html
 │   └── robots.txt
+├── ARCHITECTURE.md
 ├── AGENTS.md
+├── CONVENTIONS.md
 ├── README.md
 ├── Start-InkLumina.bat
 ├── Start-InkLumina.command
@@ -202,7 +204,7 @@ flowchart TB
 
   subgraph Storage[File System]
     J[data/sessions/*.json]
-    K[data/control/control-profile.json]
+    K[data/control/control-profile.json\n(lazy-create)]
     B[build/]
     T[static/]
   end
@@ -273,7 +275,7 @@ flowchart TB
   A[任何 request 進入]
   B[src/hooks.server.ts]
   C[ensureControlProfileLoaded()]
-  D[data/control/control-profile.json]
+  D[data/control/control-profile.json\n(lazy-create)]
   E[/api/control]
   F[src/lib/server/control.server.ts]
   G[/api/sessions*]
@@ -441,16 +443,17 @@ repo 內給 AI coding agent 的工作指南，重點放在：
 
 偏向長文與人工整理的技術文檔區，和 `.devnotes/` 的用途不同：
 
-- `ARCHITECTURE.md`：本文件，說明專案實際結構與資料流
 - `DEVNOTES.md`：人工索引／政策說明，會引用 `.devnotes/` 的快照
 - 其他檔案：架構補充、歷史整理、策略說明
+
+根目錄的 `ARCHITECTURE.md` 則作為目前 repo 結構與資料流的主說明文件。
 
 ### 6.5 `data/`
 
 runtime persistence 的根目錄：
 
 - `data/sessions/*.json`：每一場 session 一份 JSON，而不是單一總表檔
-- `data/control/control-profile.json`：control panel 的持久化設定與可選 operator token
+- `data/control/control-profile.json`：control panel 的持久化設定與可選 operator token，會在第一次保存 control profile 時才建立
 
 ### 6.6 `build/`
 
@@ -624,6 +627,7 @@ SvelteKit build 後的產物目錄，包含：
 
 - `control.shared.ts`：control profile 的 snapshot / normalize / apply owner，串起 config、settings、palette 與 runtime defaults
 - `control.ts`：client 側 hydrate / fetch / save control profile，並刷新 sprite / UI 等衍生成果
+- `socket-client.ts`：browser-only 的 typed Socket.IO client factory，供其他 socket-facing services 共用
 - `socket.ts`：建立單一 typed socket client，提供 `connect` / `emit` / `on` / `disconnect`
 - `operator.ts`：browser 側 operator token helper，供受保護的 fetch action 共用
 - `session.ts`：display session panel owner，處理 API 載入、歷史查看、QR 生成、join URL、host 暫存
@@ -663,7 +667,6 @@ SvelteKit build 後的產物目錄，包含：
 - `shared/constants/mbti.ts`：MBTI 順序、名稱、色盤、phrase 與其他跨域常數來源
 - `shared/constants/vision.ts`：手部連線與視覺相關常數
 - `shared/contracts.ts`：socket payload 與 session API contract 的正式定義
-- `shared/socket-client.ts`：typed Socket.IO client factory
 
 ### 12.9 `src/lib/states/`
 
@@ -694,6 +697,7 @@ SvelteKit build 後的產物目錄，包含：
 - `control.ts`：control profile 型別
 - `display.ts`：display view-model 與 session panel 型別
 - `index.d.ts`：runtime settings 相關型別宣告
+- `media.ts`：camera crowd / interaction 等 browser media domain 型別
 - `mobile.d.ts`：mobile component prop / event 型別
 
 ### 12.12 `src/lib/utils/`
@@ -766,7 +770,7 @@ SvelteKit `$lib` alias 的預設 barrel placeholder，現況沒有實際承載 b
 
 `/control` 不是單純前端面板，它對應一套真正可持久化的 profile：
 
-- server 儲存位置：`data/control/control-profile.json`
+- server 儲存位置：`data/control/control-profile.json`，首次保存 control profile 時 lazy-create
 - server owner：`src/lib/server/control.server.ts`
 - shared normalization / apply owner：`src/lib/services/control.shared.ts`
 - client owner：`src/lib/services/control.ts`

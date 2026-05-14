@@ -3,6 +3,7 @@
  * Purpose: Canonical barrel for runtime tunables grouped by domain.
  */
 import type { AppSettings } from '../types';
+import { controlSettings } from './control';
 import { displaySettings } from './display';
 import { networkSettings } from './network';
 import { visionSettings } from './vision';
@@ -13,6 +14,6 @@ export const settings: AppSettings = {
 	network: networkSettings
 };
 
-export { displaySettings, networkSettings, visionSettings };
+export { controlSettings, displaySettings, networkSettings, visionSettings };
 
 export default settings;

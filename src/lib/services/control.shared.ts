@@ -1,9 +1,9 @@
 /*
  * src/lib/services/control.shared.ts
- * Purpose: Canonical control-profile owner for snapshotting, normalizing, and applying runtime overrides across the app.
+ * Purpose: Canonical control-profile runtime owner for snapshotting, normalizing, and applying app overrides.
+ * It stays in services/ because it mutates runtime config/settings rather than exposing env-safe shared contracts.
  */
 import { publicConfig } from '$lib/config/public';
-import { serverConfig } from '$lib/config/server';
 import { sessionConfig } from '$lib/config/session';
 import { displaySettings } from '$lib/settings/display';
 import { networkSettings } from '$lib/settings/network';
@@ -36,6 +36,15 @@ const controlRuntimeDefaults = {
 	cameraEnabled: false,
 	waterOverlay: false
 };
+
+const defaultServerProfile: ControlProfile['server'] = {
+	defaultSessionName: 'InkLumina Session',
+	sessionFilePrefix: 'session_',
+	sessionsDir: 'data/sessions',
+	operatorTokenDefined: false
+};
+
+let controlServerProfile: ControlProfile['server'] = { ...defaultServerProfile };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
 	return typeof value === 'object' && value !== null;
@@ -100,6 +109,19 @@ export function getControlRuntimeDefaults(): { cameraEnabled: boolean; waterOver
 	return { ...controlRuntimeDefaults };
 }
 
+export function setControlServerProfile(profile: ControlProfile['server']): void {
+	controlServerProfile = {
+		defaultSessionName: profile.defaultSessionName,
+		sessionFilePrefix: profile.sessionFilePrefix,
+		sessionsDir: profile.sessionsDir,
+		operatorTokenDefined: profile.operatorTokenDefined
+	};
+}
+
+export function resetControlServerProfile(): void {
+	controlServerProfile = { ...defaultServerProfile };
+}
+
 export function snapshotControlProfile(): ControlProfile {
 	return {
 		camera: {
@@ -139,10 +161,10 @@ export function snapshotControlProfile(): ControlProfile {
 			qrScriptUrl: sessionConfig.assets.qrScriptUrl
 		},
 		server: {
-			defaultSessionName: serverConfig.defaultSessionName,
-			sessionFilePrefix: serverConfig.sessionFilePrefix,
-			sessionsDir: serverConfig.sessionsDir,
-			operatorTokenDefined: !!serverConfig.operatorToken
+			defaultSessionName: controlServerProfile.defaultSessionName,
+			sessionFilePrefix: controlServerProfile.sessionFilePrefix,
+			sessionsDir: controlServerProfile.sessionsDir,
+			operatorTokenDefined: controlServerProfile.operatorTokenDefined
 		},
 		mbti: {
 			palettes: snapshotPalettes()
@@ -264,10 +286,7 @@ export function applyControlProfile(profile: ControlProfile): ControlProfile {
 	mutablePublicConfig.socketUrl = normalized.network.socketUrl || undefined;
 	mutableSessionConfig.routes.mobileJoin = normalized.network.mobileJoinPath;
 	mutableSessionConfig.assets.qrScriptUrl = normalized.network.qrScriptUrl;
-
-	serverConfig.defaultSessionName = normalized.server.defaultSessionName;
-	serverConfig.sessionFilePrefix = normalized.server.sessionFilePrefix;
-	serverConfig.sessionsDir = normalized.server.sessionsDir;
+	setControlServerProfile(normalized.server);
 
 	for (const key of MBTI_ORDER) {
 		const palette = normalized.mbti.palettes[key];

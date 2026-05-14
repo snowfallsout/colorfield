@@ -11,6 +11,13 @@ This document defines the minimal writing and structure conventions for InkLumin
 - Prefer functions over classes unless a class clearly improves clarity.
 - Keep UI and logic separate.
 
+## 禁止行為 (Strict Prohibitions)
+
+1. **禁止在 .svelte 寫邏輯**：任何超過 3 行的 function，必須移至 `services/` 或 `states/`。
+2. **禁止局部樣式膨脹**：若 CSS 超過 30 行，必須檢查是否能透過全域 `styles/` 或拆分組件解決。
+3. **禁止重複 UI**：任何出現 2 次以上的 UI 結構（如你的 Panel Card），必須建立 `components/`。
+4. **禁止直接 fetch**：所有 API 調用必須透過 `services/`，組件只能 call service。
+
 ## 2. Svelte Component Rules
 
 - `.svelte` files are UI components first.
@@ -61,8 +68,9 @@ This document defines the minimal writing and structure conventions for InkLumin
 ## 7. Shared Rules
 
 - `src/lib/shared/` contains cross-client/server contracts.
-- Keep shared constants, types, and event contracts here.
+- Keep shared constants and event contracts here.
 - Shared code must remain environment-safe.
+- Put route, service, and UI-specific types in `src/lib/types/`.
 
 ## 8. Server Rules
 

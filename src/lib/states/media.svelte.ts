@@ -8,24 +8,9 @@ import { browser } from '$app/environment';
 import { visionSettings } from '$lib/settings/vision';
 import { setHandBadge } from '$lib/states/ui.svelte';
 import { preload as mediapipePreload, start as mediapipeStart, stop as mediapipeStop } from '$lib/services/mediapipe';
+import type { CrowdMember, InteractionPoint } from '$lib/types/media';
 
-export type CrowdMember = {
-  id?: string;
-  x: number;
-  y: number;
-  size?: number;
-  conf?: number;
-  smile?: boolean;
-  ts?: number;
-};
-
-export type InteractionPoint = {
-  id?: string;
-  x: number;
-  y: number;
-  score?: number;
-  ts?: number;
-};
+export type { CrowdMember, InteractionPoint } from '$lib/types/media';
 
 export const media = $state({
   videoEl: null as HTMLVideoElement | null,

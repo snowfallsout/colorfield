@@ -6,7 +6,7 @@ under `../.devnotes/DEVNOTES_{timestamp}.md` and reference it here.
 
 # DEVNOTES — Current
 
-Last snapshot: [DEVNOTES_2026-05-11T192507Z.md](../.devnotes/DEVNOTES_2026-05-11T192507Z.md)
+Last snapshot: [DEVNOTES_2026-05-13T222929Z.md](../.devnotes/DEVNOTES_2026-05-13T222929Z.md)
 
 Policy (short):
 
@@ -20,6 +20,16 @@ Snapshot created to preserve current state before proceeding with repo-wide chan
 ---
 
 Recent activity (delta):
+
+- 2026-05-13: Added [DEVNOTES_2026-05-13T222929Z.md](../.devnotes/DEVNOTES_2026-05-13T222929Z.md) recording the control UI consolidation: `ControlPanel.svelte` restored as the main UI component, `ControlPanelLayout.svelte` retired, and a tiny `ControlSection.svelte` wrapper added to collapse repeated card chrome.
+
+- 2026-05-13: Added [DEVNOTES_2026-05-13T204628Z.md](../.devnotes/DEVNOTES_2026-05-13T204628Z.md) recording the control-panel split: async load/save orchestration moved into `src/lib/states/control.svelte.ts`, the shell component was reduced to wiring only, and the full control-panel layout/CSS moved into `src/lib/components/control/ControlPanelLayout.svelte`.
+
+- 2026-05-12: Added [DEVNOTES_2026-05-12T203210Z.md](../.devnotes/DEVNOTES_2026-05-12T203210Z.md) recording the move of control-panel defaults into `src/lib/settings/control.ts`, including field metadata, placeholders, and reusable control-field defaults.
+
+- 2026-05-12: Added [DEVNOTES_2026-05-12T202046Z.md](../.devnotes/DEVNOTES_2026-05-12T202046Z.md) recording the control-panel modularization: repeated field markup moved into reusable control components, `ControlPanelPage.svelte` switched to typed field metadata loops, and `control.shared.ts` now explicitly documents why it remains a service owner instead of moving into `shared/`.
+
+- 2026-05-12: Added [DEVNOTES_2026-05-12T195738Z.md](../.devnotes/DEVNOTES_2026-05-12T195738Z.md) recording the lib-boundary cleanup: `control.shared.ts` no longer imports server config on the client path, `socket-client.ts` moved into `services/`, media types moved into `types/`, and the rule documents were aligned with the clearer ownership split.
 
 - 2026-05-11: Added [DEVNOTES_2026-05-11T192507Z.md](../.devnotes/DEVNOTES_2026-05-11T192507Z.md) recording the architecture-manual refresh: current `src/lib` ownership, `data/` and `.devnotes/` coverage, and the replacement of stale template references to removed HTML/runtime paths.
 
@@ -79,6 +89,8 @@ Recent activity (delta):
 - 2026-05-06: Added [DEVNOTES_TREE_2026-05-06T151040Z.md](../.devnotes/DEVNOTES_TREE_2026-05-06T151040Z.md) recording the move of the pure session join-url helper into the display service domain.
 
 Next planned actions:
+
+- Decide whether the display-only `services/session.ts` owner should remain top-level or move under `services/display/` after the current import surface stabilizes.
 
 - Remove broken namespace imports and fake module declarations before further feature work.
 - Re-scope display state ownership so DOM lifecycle is no longer centered inside `.svelte.ts` state modules.

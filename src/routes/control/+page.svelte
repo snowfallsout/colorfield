@@ -4,7 +4,7 @@
 -->
 
 <script lang="ts">
-	import ControlPanelPage from '$lib/components/control/ControlPanelPage.svelte';
+	import ControlPanelPage from '$lib/components/control/ControlPanel.svelte';
 </script>
 
 <ControlPanelPage />

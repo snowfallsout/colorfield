@@ -4,7 +4,13 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { applyControlProfile, normalizeControlProfile, snapshotControlProfile } from '$lib/services/control.shared';
+import {
+	applyControlProfile,
+	normalizeControlProfile,
+	resetControlServerProfile,
+	setControlServerProfile,
+	snapshotControlProfile
+} from '$lib/services/control.shared';
 import { serverConfig } from '$lib/config/server';
 import type { ControlProfile, ControlSavePayload } from '$lib/types/control';
 
@@ -19,6 +25,27 @@ const CONTROL_TEMP_FILE = `${CONTROL_FILE}.tmp`;
 
 let controlLoaded = false;
 let storedOperatorToken = '';
+
+function snapshotServerProfile(): ControlProfile['server'] {
+	return {
+		defaultSessionName: serverConfig.defaultSessionName,
+		sessionFilePrefix: serverConfig.sessionFilePrefix,
+		sessionsDir: serverConfig.sessionsDir,
+		operatorTokenDefined: !!serverConfig.operatorToken
+	};
+}
+
+function applyServerProfile(profile: ControlProfile['server']): void {
+	serverConfig.defaultSessionName = profile.defaultSessionName;
+	serverConfig.sessionFilePrefix = profile.sessionFilePrefix;
+	serverConfig.sessionsDir = profile.sessionsDir;
+	setControlServerProfile(snapshotServerProfile());
+}
+
+function snapshotStoredProfile(): ControlProfile {
+	setControlServerProfile(snapshotServerProfile());
+	return snapshotControlProfile();
+}
 
 function ensureControlDir(): void {
 	fs.mkdirSync(CONTROL_DIR, { recursive: true });
@@ -65,36 +92,43 @@ export function ensureControlProfileLoaded(): void {
 	controlLoaded = true;
 	const stored = readStoredControlState();
 	if (!stored) {
+		resetControlServerProfile();
+		setControlServerProfile(snapshotServerProfile());
 		return;
 	}
 
 	applyControlProfile(stored.profile);
+	applyServerProfile(stored.profile.server);
 	storedOperatorToken = stored.operatorToken ?? '';
 	if (storedOperatorToken) {
 		serverConfig.operatorToken = storedOperatorToken;
 	}
+	setControlServerProfile(snapshotServerProfile());
 }
 
 export function getControlProfile(): ControlProfile {
 	ensureControlProfileLoaded();
-	return snapshotControlProfile();
+	return snapshotStoredProfile();
 }
 
 export function saveControlProfile(payload: ControlSavePayload): ControlProfile {
 	ensureControlProfileLoaded();
 
 	const profile = applyControlProfile(payload.profile);
+	applyServerProfile(profile.server);
 	const nextOperatorToken = payload.replaceOperatorToken?.trim() ?? '';
 	if (nextOperatorToken) {
 		storedOperatorToken = nextOperatorToken;
 		serverConfig.operatorToken = nextOperatorToken;
 	}
+	setControlServerProfile(snapshotServerProfile());
+	const storedProfile = snapshotStoredProfile();
 
 	const persistedState: StoredControlState = {
-		profile,
+		profile: storedProfile,
 		...(storedOperatorToken ? { operatorToken: storedOperatorToken } : {})
 	};
 
 	persistControlState(persistedState);
-	return snapshotControlProfile();
+	return storedProfile;
 }
