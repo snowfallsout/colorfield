@@ -30,6 +30,13 @@ This document defines the minimal writing and structure conventions for InkLumin
 - Do not put session, socket, camera, or persistence workflows directly in components.
 - If logic grows, move it into `services/`.
 
+## 2.1 Component Granularity Rules
+
+- Similar widgets may be grouped into one component family when they share the same label / surface / value flow and do not conflict in behavior.
+- Prefer one family component with variants over many tiny files when the difference is only input type, layout, or minor interaction.
+- Split components only when DOM structure, validation, or interaction semantics become incompatible.
+- Do not fragment a widget family into multiple files unless the split clearly reduces complexity.
+
 ## 3. Services Rules
 
 - `src/lib/services/` contains functional logic.

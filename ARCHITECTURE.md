@@ -33,8 +33,8 @@ InkLumina 是一個以 **SvelteKit + TypeScript + Vite** 建置的現場互動�
 inklumina/
 ├── .devnotes/             # 實際的時間戳開發快照與變更追蹤索引
 │   ├── DEVNOTES.md
-│   ├── DEVNOTES_2026-05-11T072738Z.md
-│   └── ...
+│   ├── DEVNOTES_LOGS.md
+...
 ├── .github/               # Copilot / agent 規範與 repository-level 指示
 │   └── copilot-instructions.md
 ├── build/                 # SvelteKit production build 輸出，包含 client/server/socket
@@ -46,7 +46,7 @@ inklumina/
 │   │   └── control-profile.json
 │   └── sessions/
 │       ├── session_*.json
-│       └── ...
+...
 ├── devnotes/              # 長文架構文件、補充說明與人工整理的技術文檔
 │   └── DEVNOTES.md
 ├── prompts/               # prompt 資產、模板與測試資料
@@ -67,7 +67,7 @@ inklumina/
 │   │   │   └── favicon.svg
 │   │   ├── components/
 │   │   │   ├── control/
-│   │   │   │   └── ControlPanelPage.svelte
+│   │   │   │   └── ControlPanel.svelte
 │   │   │   ├── display/
 │   │   │   │   ├── Canvas.svelte
 │   │   │   │   ├── Header.svelte

@@ -1,6 +1,6 @@
 <!--
   ControlSection.svelte
-  Doc: Shared card shell for the control panel so the repeated section chrome appears once and the main UI stays in ControlPanel.svelte.
+	Doc: Shared card shell for the control page section components so the repeated card chrome appears once.
 -->
 
 <script lang="ts">
